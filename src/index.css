@@ -3,47 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles */
-body {
-  @apply bg-gray-900 text-lightGray font-sans;
-}
-
-.user-message {
-  @apply bg-customBlue text-white p-2 rounded-lg whitespace-pre-wrap w-fit;
-}
 
 .response-message {
-  @apply bg-customGray text-white p-2 rounded-lg pr-5 relative ml-auto;
-}
-
-.response-message p {
-  @apply mr-10;
-}
-
-#chat-container {
-  @apply hidden max-w-4xl mx-auto p-4 overflow-auto bg-gray-800 rounded-lg shadow-lg;
-}
-
-#chat-history {
-  @apply flex flex-col space-y-4;
-}
-
-.copy-button {
-  @apply absolute bottom-1 right-1 m-1 p-2 rounded bg-gray-700 text-white hover:bg-gray-600;
-}
-
-#scroll-wrapper {
-  @apply pb-20;
-}
-
-#input-area {
-  @apply fixed bottom-0 mb-5 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-4;
-}
-
-#message-input {
-  @apply w-full px-4 py-2 rounded-lg shadow-lg border border-gray-700 bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-customBlue;
-}
-
-#dark-mode-toggle {
-  @apply fixed top-4 right-4 p-2 bg-gray-700 text-white rounded-lg shadow-lg;
+  background-color: rgb(62, 62, 62); /* customGray equivalent */
+  color: white;
+  padding: 8px;
+  padding-right: 20px;
+  border-radius: 10px;
+  position: relative;
+  margin-left: auto;
 }
