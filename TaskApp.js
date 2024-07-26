@@ -23,10 +23,7 @@ const TaskApp = () => {
   const [newTask, setNewTask] = useState({
     name: '',
     description: '',
-    steps: [
-      { name: '', time: '' },
-      { name: '', time: '' },
-    ],
+    steps: [{ name: '', time: '' }],
   });
 
   const [currentView, setCurrentView] = useState('list');
@@ -114,24 +111,22 @@ const TaskApp = () => {
             type="text"
             placeholder="Step Name"
             value={step.name}
-            onChange={(e) =>
-              setNewTask({
-                ...newTask,
-                steps: newTask.steps.map((s, i) => (i === index ? { name: e.target.value, time: '' } : s)),
-              })
-            }
+            onChange={(e) => {
+              const updatedSteps = [...newTask.steps];
+              updatedSteps[index].name = e.target.value;
+              setNewTask({ ...newTask, steps: updatedSteps });
+            }}
             className="w-full p-2 border border-gray-300 rounded text-gray-800"
           />
           <input
             type="number"
-            placeholder="Step Time"
+            placeholder="Step Time (minutes)"
             value={step.time}
-            onChange={(e) =>
-              setNewTask({
-                ...newTask,
-                steps: newTask.steps.map((s, i) => (i === index ? { name: '', time: e.target.value } : s)),
-              })
-            }
+            onChange={(e) => {
+              const updatedSteps = [...newTask.steps];
+              updatedSteps[index].time = e.target.value;
+              setNewTask({ ...newTask, steps: updatedSteps });
+            }}
             className="w-full p-2 border border-gray-300 rounded text-gray-800"
           />
         </div>
@@ -140,35 +135,30 @@ const TaskApp = () => {
   );
 
   const handleCreateTask = () => {
-    setTasks([...tasks, { ...newTask, steps: newTask.steps.map((step) => ({ name: step.name, time: step.time })) }]);
     setIsCreatingTask(false);
+    setTasks([...tasks, newTask]);
+    setNewTask({
+      name: '',
+      description: '',
+      steps: [{ name: '', time: '' }],
+    });
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="bg-gray-100 h-screen p-4">
       {isCreatingTask ? (
         renderCreateTaskView()
       ) : (
-        currentView === 'list' && renderListView()
+        <button
+          onClick={() => setCurrentView('create')}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Create New Task
+        </button>
       )}
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => setCurrentView('focus')}
-      >
-        Switch to Focus View
-      </button>
-      <button
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => setCurrentView('kanban')}
-      >
-        Switch to Kanban View
-      </button>
-      <button
-        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => setIsCreatingTask(true)}
-      >
-        Create New Task
-      </button>
+      {currentView === 'list' && renderListView()}
+      {currentView === 'focus' && renderFocusView()}
+      {currentView === 'kanban' && renderKanbanView()}
     </div>
   );
 };
