@@ -73,7 +73,7 @@ class ModelContextSingleton {
     );
 
     this.isModelLoaded = true;
-    if (this.props) {
+    if (this.props?.setIsModelLoaded !== undefined) {
       this.props.setIsModelLoaded(true);
     }
   }
