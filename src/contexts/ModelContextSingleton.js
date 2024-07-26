@@ -24,7 +24,7 @@ class ModelContextSingleton {
     this.isModelLoaded = false;
     this.progress = "starting progress";
     this.props = props;
-    if (this.props) {
+    if (this.props?.setConfig !== undefined) {
       this.props.setConfig(config);
     }
     // Assign the instance
@@ -66,7 +66,7 @@ class ModelContextSingleton {
       (progress) => {
         this.progress = progress;
         // if this props is not empty then update the progress bar
-        if (this.props) {
+        if (this.props?.setProgress !== undefined) {
           this.props.setProgress(progress);
         }
       }
