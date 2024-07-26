@@ -20,7 +20,6 @@ const App = () => {
   const worker = useRef(null);
 
   const chatCompletion = async (query) => {
-    debugger;
     setIsGenerating(true);
     if (!worker.current) {
       // Create the worker if it does not yet exist.
@@ -53,7 +52,7 @@ const App = () => {
         }
       };
     });
-
+    setIsGenerating(false);
     return finalText;
   };
   return (

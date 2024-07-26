@@ -24,11 +24,11 @@ class ModelContextSingleton {
     this.isModelLoaded = false;
     this.progress = "starting progress";
     this.props = props;
-    // Assign the instance
-    ModelContextSingleton.instance = this;
-    if (props) {
+    if (this.props) {
       this.props.setConfig(config);
     }
+    // Assign the instance
+    ModelContextSingleton.instance = this;
   }
 
   // Method to initialize the singleton instance
