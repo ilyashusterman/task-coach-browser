@@ -41,7 +41,6 @@ const App = () => {
             ...prev.slice(0, -1),
             { role: "assistant", content: text },
           ]);
-          worker.current.terminate();
           resolve(text);
         }
         if (status === "stream") {
