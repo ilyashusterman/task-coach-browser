@@ -20,12 +20,12 @@ export const ModelProvider = ({ children }) => {
   useEffect(() => {
     const initializeModel = async () => {
       const modelContextSingleton = ModelContextSingleton.getInstance(document);
+      await modelContextSingleton.initialize();
       setLLM(modelContextSingleton.getLLM());
       setTokenizer(() => modelContextSingleton.getTokenizer());
       setIsModelLoaded(modelContextSingleton.getIsModelLoaded());
       setProgress(modelContextSingleton.getProgress());
       setConfig(modelContextSingleton.getConfig());
-      await modelContextSingleton.initialize();
     };
     initializeModel();
   }, []);
