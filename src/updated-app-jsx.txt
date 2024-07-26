@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from 'react';
+import { useModel } from "./contexts/ModelContext";
+import ChatBot from "./components/ChatBot";
+import StatusModel from "./components/StatusModel";
+import { ASSISTANT_SYSTEM_PROMPT } from "./system-prompt";
+import { marked } from "marked";
+import { env, AutoTokenizer } from "@xenova/transformers";
+
+// Constants and configurations
+const MODELS = {
+  phi3: {
+    name: "phi3",
+    path: "microsoft/Phi-3-mini-4k-instruct-onnx-web",
+    externaldata: true,
+  },
+  phi3dev: {
+    name: "phi3dev",
+    path: "schmuell/Phi-3-mini-4k-instruct-onnx-web",
+    externaldata: true,
+  },
+};
+
+const preCannedQueries = {
+  1: "Tell me about the lighthouse of Alexandria.",
+  2: "Did the lighthouse of Alexandria existed at the same time the library of Alexandria existed?",
+  3: "How did the Pharos lighthouse impact ancient maritime trade?",
+  4: "Tell me about Constantinople.",
+};
+
+// Utility functions
+const getConfig = () => {
+  const query = window.location.search.substring(1);
+  const config = {
+    model: "phi3",
+    provider: "webgpu",
+    profiler: 0,
+    verbose: 0,
+    threads: 1,
+    show_special: 0,
+    csv: 0,
+    max_tokens: 9999,
+    local: 0,
+  };
+  // ... (implementation of parsing URL parameters)
+  return config;
+};
+
+const token_to_text = (tokenizer, tokens, startidx, config) => {
+  return tokenizer.decode(tokens.slice(startidx), {
+    skip_special_tokens: config.show_special != 1,
+  });
+};
+
+const App = () => {
+  const { llm, isModelLoaded, config } = useModel();
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [tokenizer, setTokenizer] = useState(null);
+
+  useEffect(() => {
+    const initTokenizer = async () => {
+      env.localModelPath = "models";
+      env.allowRemoteModels = config.local == 0;
+      env.allowLocalModels = config.local == 1;
+      const newTokenizer = await AutoTokenizer.from_pretrained(config.model.path);
+      setTokenizer(newTokenizer);
+    };
+
+    initTokenizer();
+  }, [config]);
+
+  const handleSubmit = async (query, continuation = false) => {
+    if (!tokenizer || !llm) return;
+    setIsGenerating(true);
+
+    let prompt = continuation
+      ? query
+      : `<|system|>\n${ASSISTANT_SYSTEM_PROMPT}<|end|>\n<|user|>\n${query}<|end|>\n<|assistant|>\n`;
+
+    const { input_ids } = await tokenizer(prompt, {
+      return_tensor: false,
+      padding: true,
+      truncation: true,
+    });
+
+    llm.initilize_feed();
+
+    const start_timer = performance.now();
+    const output_index = llm.output_tokens.length + input_ids.length;
+
+    const output_tokens = await llm.generate(
+      input_ids,
+      (output_tokens) => {
+        const newText = token_to_text(tokenizer, output_tokens, output_index, config);
+        setChatHistory((prev) => [...prev, { role: "assistant", content: marked.parse(newText) }]);
+      },
+      { max_tokens: config.max_tokens }
+    );
+
+    const took = (performance.now() - start_timer) / 1000;
+    const finalText = token_to_text(tokenizer, output_tokens, output_index, config);
+    setChatHistory((prev) => [...prev.slice(0, -1), { role: "assistant", content: marked.parse(finalText) }]);
+
+    console.log(`${output_tokens.length - output_index} tokens in ${took.toFixed(1)}sec, ${((output_tokens.length - output_index) / took).toFixed(2)} tokens/sec`);
+    setIsGenerating(false);
+  };
+
+  // Additional features from main.js can be implemented here
+  // For example, pre-canned queries, copy to clipboard functionality, etc.
+
+  return (
+    <div className="App">
+      <StatusModel isLoaded={isModelLoaded} />
+      <ChatBot
+        chatHistory={chatHistory}
+        setChatHistory={setChatHistory}
+        onSubmit={handleSubmit}
+        isGenerating={isGenerating}
+        preCannedQueries={preCannedQueries}
+      />
+    </div>
+  );
+};
+
+export default App;

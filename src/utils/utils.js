@@ -12,7 +12,8 @@ export const MODELS = {
 };
 
 export function getConfig() {
-  const query = window.location.search.substring(1);
+  const query = "";
+  // const query = window.location.search.substring(1);
   var config = {
     model: "phi3",
     provider: "webgpu",
@@ -60,74 +61,70 @@ export async function hasWebGPU() {
   }
 }
 
-export async function fetchAndCache(url, callbackSetProgressText) {
+export async function fetchAndCache(
+  url,
+  callbackSetProgressText,
+  addText = ""
+) {
+  const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+  const cache = await caches.open("onnx");
+
   try {
-    const cache = await caches.open("onnx");
-    let cachedResponse = await cache.match(url);
-    if (cachedResponse === undefined) {
-      console.log(`${url} (network)`);
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-      }
-
-      const contentLength = response.headers.get("content-length");
-      if (!contentLength) {
-        throw new Error("Content-Length response header is missing");
-      }
-
-      const total = parseInt(contentLength, 10);
-      let loaded = 0;
-
-      const reader = response.body.getReader();
-      const stream = new ReadableStream({
-        start(controller) {
-          function push() {
-            reader
-              .read()
-              .then(({ done, value }) => {
-                if (done) {
-                  controller.close();
-                  return;
-                }
-
-                loaded += value.byteLength;
-                const progress = (loaded / total) * 100;
-                callbackSetProgressText(progress.toPrecision(4) + "%");
-
-                controller.enqueue(value);
-                push();
-              })
-              .catch((error) => {
-                console.error(error);
-                controller.error(error);
-              });
-          }
-
-          push();
-        },
-      });
-
-      const newResponse = new Response(stream, {
-        headers: { "Content-Type": response.headers.get("Content-Type") },
-      });
-
-      const buffer = await newResponse.arrayBuffer();
-
-      try {
-        await cache.put(url, new Response(buffer));
-      } catch (error) {
-        console.error(error);
-      }
-      return buffer;
+    // Step 1: Check cache first
+    const cachedResponse = await cache.match(url);
+    if (cachedResponse) {
+      console.log(`${url} (cached)`);
+      return cachedResponse.arrayBuffer();
     }
 
-    console.log(`${url} (cached)`);
-    const data = await cachedResponse.arrayBuffer();
-    return data;
+    console.log(`${url} (network)`);
+
+    // Step 2: Fetch the resource
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+    }
+
+    // Step 3: Get content length and prepare for download
+    const contentLength = response.headers.get("content-length");
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
+    let loaded = 0;
+    let lastReportedProgress = 0;
+
+    // Step 4: Handle large files with streaming
+    if (total > CHUNK_SIZE) {
+      const chunks = [];
+      const reader = response.body.getReader();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        loaded += value.length;
+
+        // Step 5: Calculate and report progress
+        if (total) {
+          const currentProgress = Math.floor((loaded / total) * 100);
+          if (currentProgress > lastReportedProgress) {
+            callbackSetProgressText(currentProgress + "% " + addText);
+            lastReportedProgress = currentProgress;
+          }
+        }
+      }
+
+      // Step 6: Combine chunks and cache
+      const arrayBuffer = await new Blob(chunks).arrayBuffer();
+      await cache.put(url, new Response(arrayBuffer.slice(0)));
+      return arrayBuffer;
+    } else {
+      // Step 7: Handle smaller files
+      const arrayBuffer = await response.arrayBuffer();
+      await cache.put(url, new Response(arrayBuffer.slice(0)));
+      return arrayBuffer;
+    }
   } catch (error) {
-    console.error(`can't fetch ${url}`);
+    console.error(`Can't fetch ${url}:`, error);
     throw error;
   }
 }

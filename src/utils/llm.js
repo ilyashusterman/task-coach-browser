@@ -3,8 +3,9 @@ import { fetchAndCache } from "./utils";
 
 ort.env.wasm.numThreads = 1;
 ort.env.wasm.simd = true;
-ort.env.wasm.wasmPaths =
-  document.location.pathname.replace("index.html", "") + "dist/";
+// ort.env.wasm.wasmPaths =
+//   document.location.pathname.replace("index.html", "") + "dist/";
+ort.env.wasm.wasmPaths = "/task-coach-browser/" + "dist/";
 
 export class LLM {
   sess = undefined;
@@ -18,7 +19,11 @@ export class LLM {
   dtype = "float16";
   max_tokens = 9999;
 
-  constructor() {}
+  constructor(document = undefined) {
+    // ort.env.wasm.wasmPaths =
+    //   document.location.pathname.replace("index.html", "") + "dist/";
+    ort.env.wasm.wasmPaths = "/task-coach-browser/" + "dist/";
+  }
 
   async load(model, options, callBackWait) {
     const provider = options.provider || "webgpu";
@@ -35,19 +40,22 @@ export class LLM {
 
     const json_bytes = await fetchAndCache(
       model_path + "/config.json",
-      callBackWait
+      callBackWait,
+      "config.json"
     );
     let textDecoder = new TextDecoder();
     const model_config = JSON.parse(textDecoder.decode(json_bytes));
 
     const model_bytes = await fetchAndCache(
       model_path + "/onnx/" + model_file,
-      callBackWait
+      callBackWait,
+      "model_file"
     );
     const externaldata = model.externaldata
       ? await fetchAndCache(
           model_path + "/onnx/" + model_file + "_data",
-          callBackWait
+          callBackWait,
+          "externaldata"
         )
       : false;
     let modelSize = model_bytes.byteLength;
@@ -102,6 +110,7 @@ export class LLM {
     this.dtype = hasFP16 ? "float16" : "float32";
     this.num_layers = model_config.num_hidden_layers;
     this.initilize_feed();
+    callBackWait(null);
   }
 
   initilize_feed() {
@@ -208,6 +217,7 @@ export class LLM {
         BigInt64Array.from({ length: seqlen }, () => 1n),
         [1, seqlen]
       );
+
       const outputs = await this.sess.run(feed);
       last_token = BigInt(this.argmax(outputs.logits));
       this.output_tokens.push(last_token);

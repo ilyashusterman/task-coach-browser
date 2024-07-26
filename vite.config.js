@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-
+import { comlink } from "vite-plugin-comlink";
 // Resolve path
 import { fileURLToPath } from "url";
 import path from "path";
@@ -20,6 +20,7 @@ export default defineConfig({
         },
       ],
     }),
+    comlink(),
   ],
   build: {
     outDir: "dist",
@@ -33,8 +34,8 @@ export default defineConfig({
       },
     },
   },
-  // server: {
-  //   port: 8081,
-  //   open: true,
-  // },
+  server: {
+    port: 8081,
+    open: true,
+  },
 });

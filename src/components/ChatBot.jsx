@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { marked } from "marked";
+import { useModel } from "../contexts/ModelContext";
+import "./ChatBot.css";
 
-const ChatInterface = ({
-  chatHistory,
-  setChatHistory,
-  onSubmit,
-  isGenerating,
-}) => {
+marked.use({ mangle: false, headerIds: false });
+
+const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
+  const { llm, isModelLoaded } = useModel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
@@ -17,12 +17,25 @@ const ChatInterface = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (input.trim() === "") return;
-
-    setChatHistory((prev) => [...prev, { role: "user", content: input }]);
+    if (isGenerating) {
+      llm.abort();
+      setInput("");
+      return;
+    }
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "user", content: input },
+      { role: "assistant", content: ".." },
+    ]);
     onSubmit(input);
     setInput("");
   };
-
+  const getButtonMessage = () => {
+    if (!isModelLoaded) {
+      return "Loading model...";
+    }
+    return isGenerating ? "Generating..." : "Send";
+  };
   return (
     <div className="chat-container">
       <div className="chat-history">
@@ -40,14 +53,14 @@ const ChatInterface = ({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          disabled={isGenerating}
+          disabled={isGenerating || !isModelLoaded}
         />
-        <button type="submit" disabled={isGenerating}>
-          {isGenerating ? "Generating..." : "Send"}
+        <button type="submit" disabled={isGenerating || !isModelLoaded}>
+          {getButtonMessage()}
         </button>
       </form>
     </div>
   );
 };
 
-export default ChatInterface;
+export default ChatBot;
