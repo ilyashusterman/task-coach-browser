@@ -20,8 +20,11 @@ export class LLM {
   max_tokens = 9999;
 
   constructor(document = undefined) {
-    // ort.env.wasm.wasmPaths =
-    //   document.location.pathname.replace("index.html", "") + "dist/";
+    if (document) {
+      ort.env.wasm.wasmPaths =
+        document.location.pathname.replace("index.html", "") + "dist/";
+      return;
+    }
     ort.env.wasm.wasmPaths = "/task-coach-browser/" + "dist/";
   }
 
@@ -37,25 +40,23 @@ export class LLM {
       : "https://huggingface.co/" + model.path + "/resolve/main";
     let model_file = model.file || "model";
     model_file = hasFP16 ? model_file + "_q4f16.onnx" : model_file + "_q4.onnx";
-
     const json_bytes = await fetchAndCache(
       model_path + "/config.json",
       callBackWait,
-      "config.json"
+      "config.json file"
     );
     let textDecoder = new TextDecoder();
     const model_config = JSON.parse(textDecoder.decode(json_bytes));
-
     const model_bytes = await fetchAndCache(
       model_path + "/onnx/" + model_file,
       callBackWait,
-      "model_file"
+      "Model file"
     );
     const externaldata = model.externaldata
       ? await fetchAndCache(
           model_path + "/onnx/" + model_file + "_data",
           callBackWait,
-          "externaldata"
+          "Model external data"
         )
       : false;
     let modelSize = model_bytes.byteLength;

@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { marked } from "marked";
-import { useModel } from "../contexts/ModelContext";
+
 import "./ChatBot.css";
 
 marked.use({ mangle: false, headerIds: false });
 
 const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
-  const { llm, isModelLoaded } = useModel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
@@ -18,7 +17,6 @@ const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
     e.preventDefault();
     if (input.trim() === "") return;
     if (isGenerating) {
-      llm.abort();
       setInput("");
       return;
     }
@@ -31,9 +29,6 @@ const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
     setInput("");
   };
   const getButtonMessage = () => {
-    if (!isModelLoaded) {
-      return "Loading model...";
-    }
     return isGenerating ? "Generating..." : "Send";
   };
   return (
@@ -53,9 +48,9 @@ const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          disabled={isGenerating || !isModelLoaded}
+          disabled={isGenerating}
         />
-        <button type="submit" disabled={isGenerating || !isModelLoaded}>
+        <button type="submit" disabled={isGenerating}>
           {getButtonMessage()}
         </button>
       </form>

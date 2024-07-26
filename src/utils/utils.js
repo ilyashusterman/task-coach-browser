@@ -66,6 +66,7 @@ export async function fetchAndCache(
   callbackSetProgressText,
   addText = ""
 ) {
+  callbackSetProgressText(`Loading ${addText}...`);
   const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
   const cache = await caches.open("onnx");
 

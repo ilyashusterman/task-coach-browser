@@ -6,7 +6,7 @@ import { getConfig, hasWebGPU } from "../utils/utils";
 class ModelContextSingleton {
   static instance = null;
 
-  constructor(document = undefined) {
+  constructor(document = undefined, props = {}) {
     if (ModelContextSingleton.instance) {
       return ModelContextSingleton.instance;
     }
@@ -15,9 +15,7 @@ class ModelContextSingleton {
     env.localModelPath = "models";
     env.allowRemoteModels = config.local == 0;
     env.allowLocalModels = config.local == 1;
-    if (document) {
-      this.document = document;
-    }
+    this.document = document || undefined;
     this.config = config;
 
     // Initializing properties
@@ -25,15 +23,21 @@ class ModelContextSingleton {
     this.tokenizer = null;
     this.isModelLoaded = false;
     this.progress = "starting progress";
-
+    this.props = props;
     // Assign the instance
     ModelContextSingleton.instance = this;
+    if (props) {
+      this.props.setConfig(config);
+    }
   }
 
   // Method to initialize the singleton instance
-  static getInstance(document = undefined) {
+  static getInstance(document = undefined, props = {}) {
     if (!ModelContextSingleton.instance) {
-      ModelContextSingleton.instance = new ModelContextSingleton(document);
+      ModelContextSingleton.instance = new ModelContextSingleton(
+        document,
+        props
+      );
     }
     return ModelContextSingleton.instance;
   }
@@ -61,10 +65,17 @@ class ModelContextSingleton {
       },
       (progress) => {
         this.progress = progress;
+        // if this props is not empty then update the progress bar
+        if (this.props) {
+          this.props.setProgress(progress);
+        }
       }
     );
 
     this.isModelLoaded = true;
+    if (this.props) {
+      this.props.setIsModelLoaded(true);
+    }
   }
 
   // Getter methods to access properties

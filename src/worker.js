@@ -1,6 +1,5 @@
 import ModelContextSingleton from "./contexts/ModelContextSingleton";
 import { generatePrompt, token_to_text } from "./utils/messages";
-export const test = "1";
 
 const instance = ModelContextSingleton.getInstance();
 
