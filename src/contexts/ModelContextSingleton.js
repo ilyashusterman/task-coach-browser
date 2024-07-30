@@ -43,11 +43,19 @@ class ModelContextSingleton {
   }
 
   // Asynchronous method to initialize the model
-  async initialize() {
+  async initialize(
+    callBackProgress = undefined,
+    callbackIsModelLoaded = undefined
+  ) {
     if (this.isModelLoaded) {
       return;
     }
-
+    if (callBackProgress) {
+      this.props.setProgress = callBackProgress;
+    }
+    if (callbackIsModelLoaded) {
+      this.props.setIsModelLoaded = callbackIsModelLoaded;
+    }
     this.tokenizer = await AutoTokenizer.from_pretrained(
       this.config.model.path
     );

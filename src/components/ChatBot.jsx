@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { marked } from "marked";
-import { useModel } from "../contexts/ModelContext";
+
 import "./ChatBot.css";
+import { useModel } from "../contexts/ModelContext";
 
 marked.use({ mangle: false, headerIds: false });
 

@@ -18,6 +18,8 @@ export class LLM {
   kv_dims = [];
   dtype = "float16";
   max_tokens = 9999;
+  model_bytes = null;
+  opt = null;
 
   constructor(document = undefined) {
     if (document) {
@@ -99,7 +101,8 @@ export class LLM {
       ort.env.webgpu.profilingMode = "default";
       ort.env.webgpu.profiling.mode = "default";
     }
-
+    this.model_bytes = model_bytes;
+    this.opt = opt;
     this.sess = await ort.InferenceSession.create(model_bytes, opt);
     this.eos = model_config.eos_token_id;
     this.kv_dims = [
@@ -110,18 +113,21 @@ export class LLM {
     ];
     this.dtype = hasFP16 ? "float16" : "float32";
     this.num_layers = model_config.num_hidden_layers;
-    this.initilize_feed();
+    await this.initilize_feed();
     callBackWait(null);
   }
+  async refreshSession() {
+    this.sess = await ort.InferenceSession.create(this.model_bytes, this.opt);
+  }
 
-  initilize_feed() {
+  async initilize_feed() {
     const feed = this.feed;
 
     // dispose of previous gpu buffers
     for (const name in feed) {
       const t = feed[name];
       if (t.location === "gpu-buffer") {
-        t.dispose();
+        await t.dispose();
       }
     }
     this.feed = {};

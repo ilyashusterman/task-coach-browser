@@ -66,7 +66,7 @@ export async function fetchAndCache(
   callbackSetProgressText,
   addText = ""
 ) {
-  callbackSetProgressText(`Loading ${addText}...`);
+  callbackSetProgressText({ text: `Loading ${addText}...`, progress: 0 });
   const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
   const cache = await caches.open("onnx");
 
@@ -108,7 +108,10 @@ export async function fetchAndCache(
         if (total) {
           const currentProgress = Math.floor((loaded / total) * 100);
           if (currentProgress > lastReportedProgress) {
-            callbackSetProgressText(currentProgress + "% " + addText);
+            callbackSetProgressText({
+              text: addText,
+              progress: currentProgress,
+            });
             lastReportedProgress = currentProgress;
           }
         }

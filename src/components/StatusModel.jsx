@@ -1,12 +1,13 @@
 import React from "react";
-import { useModel } from "../contexts/ModelContext";
+import LoadingIndicator from "./LoadingIndicator";
 
-const StatusModel = () => {
-  const { progress, isModelLoaded } = useModel();
+const StatusModel = ({ progress, isModelLoaded }) => {
   return (
     <div className="status-loading">
       {isModelLoaded ? null : "Loading model..."}
-      <p>{progress}</p>
+      {progress && progress?.text !== null && progress?.progress !== null ? (
+        <LoadingIndicator percentage={progress.progress} text={progress.text} />
+      ) : null}
     </div>
   );
 };

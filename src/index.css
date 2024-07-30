@@ -9,3 +9,49 @@ body {
   margin: 0; /* Remove default body margins */
   padding: 2rem; /* Add some padding for content */
 }
+
+/* Global styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.app {
+  padding: 20px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  border-radius: 4px 4px 0 0;
+  transition: background-color 0.3s;
+}
+
+.tab.active {
+  background-color: #fff;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+/* Tab content */
+.tab-content {
+  border: 1px solid #ccc;
+  border-radius: 0 4px 4px 4px;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.hidden {
+  display: none;
+}
