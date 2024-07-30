@@ -1,0 +1,5 @@
+/* Add this in your CSS file */
+.z-depth {
+    z-index: 10; /* Adjust this value as needed */
+    pointer-events: none;
+  }
