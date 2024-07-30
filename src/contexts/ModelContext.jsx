@@ -6,6 +6,7 @@ import React, {
   useRef,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { extractJsonString } from "../utils/messages";
 const ModelContext = createContext();
 
 export const useModel = () => useContext(ModelContext);
@@ -20,7 +21,7 @@ export const ModelProvider = ({ children }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const chatCompletionJSON = async (query, sysPrompt) => {
     const response = await chatCompletion(query, sysPrompt);
-    return JSON.parse(response);
+    return extractJsonString(response);
   };
 
   const chatCompletion = async (

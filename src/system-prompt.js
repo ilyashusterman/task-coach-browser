@@ -1,7 +1,7 @@
 export const ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK = `
 Your Main Task: to know if user input is a task needed to create subtasks.
 1. you must analyze and think about the user input.
-2. you must validate if its a valid task by task definition to monday, jira, todo's, or some task that can be divided .
+2. you must validate if its a valid task by task definition to monday, jira, todo's, that the user input can be splitted or divided to steps, and tasks.
 3. think it and provide explanation how its valid or invalid with "explain" field.
 4. must output only 1 json formatted response.
 you must think and do this step by step.

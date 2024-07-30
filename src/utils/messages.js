@@ -57,3 +57,20 @@ export const token_to_text = (tokenizer, tokens, startidx, config) => {
     skip_special_tokens: config.show_special != 1,
   });
 };
+
+export function extractJsonString(text) {
+  const regex = /```json\s*([\s\S]*?)\s*```/;
+  const match = text.match(regex);
+  if (match && match[1]) {
+    try {
+      const jsonString = match[1];
+      const jsonObject = JSON.parse(jsonString);
+      return jsonObject;
+    } catch (error) {
+      console.error("Invalid JSON format:", error);
+    }
+  } else {
+    return JSON.parse(text);
+  }
+  return JSON.parse(text);
+}

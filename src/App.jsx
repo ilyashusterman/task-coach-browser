@@ -10,11 +10,12 @@ import {
   ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON,
 } from "./system-prompt";
 import { useModel } from "./contexts/ModelContext";
+import SystemPromptEditor from "./components/SystemPromptEditor";
 
 const App = () => {
   const [chatHistory, setChatHistory] = useState([]);
   const [systemPrompt, setSystemPrompt] = useState(
-    ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON
+    ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK
   );
   const {
     isModelLoaded,
@@ -81,6 +82,10 @@ const App = () => {
             setChatHistory={setChatHistory}
             onSubmit={chatCompletion}
             isGenerating={isGenerating}
+          />
+          <SystemPromptEditor
+            systemPrompt={systemPrompt}
+            setSystemPrompt={setSystemPrompt}
           />
         </div>
       </div>
