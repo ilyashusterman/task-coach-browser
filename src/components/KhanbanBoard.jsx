@@ -5,13 +5,6 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import PropTypes from "prop-types";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  resetServerContext,
-} from "react-beautiful-dnd";
 import { v4 as uuidv4 } from "uuid";
 import LoadingIndicator from "./LoadingIndicator";
 import {
@@ -21,8 +14,7 @@ import {
   ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON,
 } from "../system-prompt";
 import { useModel } from "../contexts/ModelContext";
-import TaskComponent from "./TaskComponent";
-import Board from "./Board";
+import Board from "./khanban-ui/Board";
 
 const INITIAL_COLUMNS = [
   { id: "backlog", title: "Backlog", tasks: {} },
@@ -59,9 +51,8 @@ const KanbanBoard = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
-  const saveBoardState = () => {
-    localStorage.setItem("kanbanBoard", JSON.stringify(board));
-    alert("Board state saved successfully!");
+  const saveBoardState = (saveBoard) => {
+    localStorage.setItem("kanbanBoard", JSON.stringify(saveBoard || board));
   };
 
   const exportBoardState = () => {
@@ -122,7 +113,6 @@ const KanbanBoard = () => {
       const parsedBoard = JSON.parse(savedBoard);
       setBoard(parsedBoard);
     } else {
-      debugger;
       // Initialize with default columns
       const initialColumns = INITIAL_COLUMNS.reduce((acc, column) => {
         acc[column.id] = { id: column.id, title: column.title, tasks: {} };
@@ -139,12 +129,6 @@ const KanbanBoard = () => {
       setGreeting("Hello lets create tasks");
     }
   }, [isModelLoaded]);
-
-  //   useEffect(() => {
-  //     console.log(board);
-  //     debugger;
-  //     localStorage.setItem("kanbanBoard", JSON.stringify(board));
-  //   }, [board]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -172,6 +156,7 @@ const KanbanBoard = () => {
     const parentTask = {
       id: `task-${uuidv4()}`,
       ...newTask,
+      isParent: true,
     };
     const newTaskWithId = {
       ...parentTask,
@@ -182,6 +167,7 @@ const KanbanBoard = () => {
           id: subTaskId,
           parentId: parentTask.id,
           column: INITIAL_COLUMNS[0].id,
+          parentTitle: newTask.title,
         };
         return acc;
       }, {}),
@@ -244,45 +230,6 @@ const KanbanBoard = () => {
     }));
   };
 
-  const onDragEnd = (result) => {
-    debugger;
-    const { source, destination, type } = result;
-    debugger;
-    if (!destination) {
-      return;
-    }
-    debugger;
-    if (type === "TASK") {
-      debugger;
-      const sourceColumn = board.columns[source.droppableId];
-      const destColumn = board.columns[destination.droppableId];
-      const taskId = result.draggableId;
-
-      const sourceTask = sourceColumn.tasks[taskId];
-      const newSourceTasks = { ...sourceColumn.tasks };
-      delete newSourceTasks[taskId];
-
-      const newDestTasks = {
-        ...destColumn.tasks,
-        [taskId]: sourceTask,
-      };
-
-      setBoard((prev) => ({
-        ...prev,
-        columns: {
-          ...prev.columns,
-          [sourceColumn.id]: {
-            ...sourceColumn,
-            tasks: newSourceTasks,
-          },
-          [destColumn.id]: {
-            ...destColumn,
-            tasks: newDestTasks,
-          },
-        },
-      }));
-    }
-  };
   const setProgressAndText = (
     text,
     progress = undefined,
@@ -354,31 +301,66 @@ const KanbanBoard = () => {
     return flatTasks;
   };
   const getTasks = useCallback(() => {
-    const test = Object.entries(board.columns).reduce(
-      (acc, [columnId, column]) => {
-        const tasks = Object.values(column.tasks).reduce((taskAcc, task) => {
-          const flatTasks = getFlatTasksFromTaskRecursively(task);
-          taskAcc = [...taskAcc, ...flatTasks];
-          return taskAcc;
-        }, []);
-        acc.push({
-          id: columnId,
-          title: column.title,
-          tasks: tasks,
-        });
-        return acc;
-      },
-      []
-    );
-    return test;
+    return Object.entries(board.columns).reduce((acc, [columnId, column]) => {
+      const tasks = Object.values(column.tasks).reduce((taskAcc, task) => {
+        const flatTasks = getFlatTasksFromTaskRecursively(task);
+        taskAcc = [...taskAcc, ...flatTasks];
+        return taskAcc;
+      }, []);
+      acc.push({
+        id: columnId,
+        title: column.title,
+        tasks: tasks,
+      });
+      return acc;
+    }, []);
   }, [board]);
 
   const tasksWithSubtasks = useMemo(() => getTasks(), [getTasks]);
+
+  const updateBoardTasks = (tasks) => {
+    const newBoard = {
+      id: board.id,
+      title: board.title,
+      columns: {},
+    };
+
+    tasks.forEach((column) => {
+      newBoard.columns[column.id] = {
+        id: column.id,
+        title: column.title,
+        tasks: {},
+      };
+
+      column.tasks.forEach((task) => {
+        newBoard.columns[column.id].tasks[task.id] = {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          estimatedTime: task.estimatedTime,
+          column: task.column,
+          parentId: task.parentId,
+        };
+      });
+    });
+    setBoard(newBoard);
+    saveBoardState(newBoard);
+  };
   return (
     <div className="p-4 bg-green-50 min-h-screen">
       <div className={`${isLoading ? "z-depth-1" : ""}`}>
         <h1 className="text-3xl font-bold mb-4 text-green-800">
-          {board.title}
+          <input
+            value={board.title}
+            onChange={(e) =>
+              setBoard({
+                ...board,
+                title: e.target.value,
+              })
+            }
+            className="text-3xl font-bold mb-4 text-green-800 w-full mr-2 bg-transparent border-b border-transparent focus:border-green-300 focus:outline-none transition-all duration-300"
+          />
         </h1>
         <p className="font-bold mb-4 text-green-800"> {greeting}</p>
       </div>
@@ -440,61 +422,11 @@ const KanbanBoard = () => {
       <Board
         columns={INITIAL_COLUMNS}
         tasks={tasksWithSubtasks}
-        onEndDrop={onDragEnd}
+        setTasks={updateBoardTasks}
         updateTask={updateTask} // Make sure to pass updateTask function
         deleteTask={deleteTask} // Make sure to pass deleteTask function
         handleFileUpload={handleFileUpload}
       />
-      {/* <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex space-x-4 overflow-x-auto pb-4">
-          {INITIAL_COLUMNS.map((column) => (
-            <div
-              key={column.id}
-              className="bg-green-100 p-4 rounded-lg shadow-md min-w-[300px]"
-            >
-              <h2 className="font-bold mb-4 text-green-800">{column.title}</h2>
-              <Droppable droppableId={column.id} type="TASK">
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="min-h-[200px]"
-                  >
-                    {tasksWithSubtasks.find(
-                      (taskColumn) => taskColumn.id === column.id
-                    )?.tasks === undefined
-                      ? null
-                      : tasksWithSubtasks
-                          .find((taskColumn) => taskColumn.id === column.id)
-                          .tasks.map((task, index) => (
-                            <Draggable
-                              key={task.id}
-                              draggableId={task.id}
-                              index={index}
-                            >
-                              {(provided) => (
-                                <TaskComponent
-                                  task={task}
-                                  columnId={column.id}
-                                  updateTask={updateTask}
-                                  deleteTask={deleteTask}
-                                  handleFileUpload={handleFileUpload}
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                />
-                              )}
-                            </Draggable>
-                          ))}
-
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-          ))}
-        </div>
-      </DragDropContext> */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96">
