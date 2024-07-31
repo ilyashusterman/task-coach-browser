@@ -51,7 +51,7 @@ const KanbanBoard = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
-  const saveBoardState = (saveBoard) => {
+  const saveBoardState = (saveBoard = undefined) => {
     localStorage.setItem("kanbanBoard", JSON.stringify(saveBoard || board));
   };
 
@@ -372,7 +372,7 @@ const KanbanBoard = () => {
           Add Task
         </button>
         <button
-          onClick={saveBoardState}
+          onClick={() => saveBoardState()}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300"
         >
           Save Board State
