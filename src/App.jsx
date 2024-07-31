@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChatBot from "./components/ChatBot";
 import StatusModel from "./components/StatusModel";
-import KanbanBoard from "./components/KhanbanBoard";
 import {
   ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK,
   ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS,
@@ -11,6 +10,7 @@ import {
 } from "./system-prompt";
 import { useModel } from "./contexts/ModelContext";
 import SystemPromptEditor from "./components/SystemPromptEditor";
+import KanbanBoard from "./components/KhanbanBoard";
 
 const App = () => {
   const [chatHistory, setChatHistory] = useState([]);

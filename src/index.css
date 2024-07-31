@@ -3,20 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+body { 
   background-color: #f5f5f5; 
   font-family: sans-serif; /* Add a modern font */
   margin: 0; /* Remove default body margins */
   padding: 2rem; /* Add some padding for content */
-}
-
-/* Global styles */
-body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
+} 
 
 .app {
   padding: 20px;
