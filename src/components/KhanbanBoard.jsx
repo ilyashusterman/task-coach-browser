@@ -27,7 +27,7 @@ const INITIAL_COLUMNS = [
 
 const KanbanBoard = () => {
   const { chatCompletion, chatCompletionJSON, isModelLoaded } = useModel();
-  const [board, setBoard] = useState({
+  const [board, setBoardBase] = useState({
     id: "board-1",
     title: "My Kanban Board",
     columns: INITIAL_COLUMNS.reduce((acc, column) => {
@@ -54,7 +54,10 @@ const KanbanBoard = () => {
   const saveBoardState = (saveBoard = undefined) => {
     localStorage.setItem("kanbanBoard", JSON.stringify(saveBoard || board));
   };
-
+  const setBoard = (board) => {
+    saveBoardState(board);
+    return setBoardBase(board);
+  };
   const exportBoardState = () => {
     const dataStr =
       "data:text/json;charset=utf-8," +
@@ -109,9 +112,9 @@ const KanbanBoard = () => {
   useEffect(() => {
     const savedBoard = localStorage.getItem("kanbanBoard");
 
-    if (savedBoard) {
+    if (savedBoard && savedBoard !== "undefined") {
       const parsedBoard = JSON.parse(savedBoard);
-      setBoard(parsedBoard);
+      setBoardBase(parsedBoard);
     } else {
       // Initialize with default columns
       const initialColumns = INITIAL_COLUMNS.reduce((acc, column) => {
@@ -172,7 +175,7 @@ const KanbanBoard = () => {
         return acc;
       }, {}),
     };
-    const newBoard = {
+    setBoard({
       ...board,
       columns: {
         ...board.columns,
@@ -185,8 +188,7 @@ const KanbanBoard = () => {
           },
         },
       },
-    };
-    setBoard(newBoard);
+    });
     setNewTask({
       title: "",
       description: "",
@@ -197,37 +199,38 @@ const KanbanBoard = () => {
   };
 
   const updateTask = (columnId, taskId, updates) => {
-    setBoard((prev) => ({
-      ...prev,
+    setBoard({
+      ...board,
       columns: {
-        ...prev.columns,
+        ...board.columns,
         [columnId]: {
-          ...prev.columns[columnId],
+          ...board.columns[columnId],
           tasks: {
-            ...prev.columns[columnId].tasks,
+            ...board.columns[columnId].tasks,
             [taskId]: {
-              ...prev.columns[columnId].tasks[taskId],
+              ...board.columns[columnId].tasks[taskId],
               ...updates,
             },
           },
         },
       },
-    }));
+    });
   };
 
   const deleteTask = (columnId, taskId) => {
     const newTasks = { ...board.columns[columnId].tasks };
     delete newTasks[taskId];
-    setBoard((prev) => ({
-      ...prev,
+
+    setBoard({
+      ...board,
       columns: {
-        ...prev.columns,
+        ...board.columns,
         [columnId]: {
-          ...prev.columns[columnId],
+          ...board.columns[columnId],
           tasks: newTasks,
         },
       },
-    }));
+    });
   };
 
   const setProgressAndText = (
