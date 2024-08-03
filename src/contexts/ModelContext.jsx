@@ -138,7 +138,7 @@ export const ModelProvider = ({ children }) => {
       };
     }
   };
-
+  const abortWorker = () => restartWorker;
   useEffect(() => {
     restartWorker(true);
   }, []); // Empty dependency array ensures this runs only once
@@ -151,6 +151,7 @@ export const ModelProvider = ({ children }) => {
         progress,
         chatCompletionJSON,
         chatCompletion,
+        abortWorker,
       }}
     >
       {children}

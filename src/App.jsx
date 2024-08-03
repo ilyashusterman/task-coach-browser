@@ -21,6 +21,7 @@ const App = () => {
     isModelLoaded,
     progress,
     chatCompletion: chatCompletionBase,
+    abortWorker,
   } = useModel();
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -82,6 +83,7 @@ const App = () => {
             setChatHistory={setChatHistory}
             onSubmit={chatCompletion}
             isGenerating={isGenerating}
+            abortWorker={abortWorker}
           />
           <SystemPromptEditor
             systemPrompt={systemPrompt}

@@ -6,7 +6,13 @@ import { useModel } from "../contexts/ModelContext";
 
 marked.use({ mangle: false, headerIds: false });
 
-const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
+const ChatBot = ({
+  chatHistory,
+  setChatHistory,
+  onSubmit,
+  isGenerating,
+  abortWorker,
+}) => {
   const { isModelLoaded } = useModel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
@@ -58,6 +64,8 @@ const ChatBot = ({ chatHistory, setChatHistory, onSubmit, isGenerating }) => {
         <button type="submit" disabled={isGenerating || !isModelLoaded}>
           {getButtonMessage()}
         </button>
+
+        <button onClick={abortWorker}>Abort</button>
       </form>
     </div>
   );

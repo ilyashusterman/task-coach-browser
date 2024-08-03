@@ -48,6 +48,8 @@ const KanbanBoard = () => {
     estimatedTime: "1 hour",
     column: INITIAL_COLUMNS[0].id,
     id: uuidv4(),
+    bypassValidation: false,
+    generateSubtasks: true,
   });
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
@@ -137,20 +139,21 @@ const KanbanBoard = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const handleNewTaskChange = (e) => {
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setNewTask({
       ...newTask,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
       column: INITIAL_COLUMNS[0].id,
       id: uuidv4(),
     });
   };
-
   const addTask = async () => {
     setIsLoading(true);
     closeModal();
     let subtasks = [];
     try {
-      subtasks = await generateSubtasks(newTask.title);
+      subtasks = await generateSubtasks(newTask);
     } catch (err) {
       setError(err.message);
       setIsLoading(false);
@@ -243,20 +246,21 @@ const KanbanBoard = () => {
       setLoadingText(text);
     }, miliseconds);
   };
-  const generateSubtasks = async (taskTitle) => {
+  const generateSubtasks = async (task) => {
+    const taskTitle = task.title;
     setIsGenerating(true);
     setProgressAndText("Generating subtasks...", 0, 0);
     const query = `${taskTitle}`;
     setProgressAndText("Validating Task...", 15);
-
-    const validationResponse = await chatCompletionJSON(
-      query,
-      ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK
-    );
-    if (validationResponse.valid === false) {
-      throw new Error(validationResponse.explain);
+    if (!task.bypassValidation) {
+      const validationResponse = await chatCompletionJSON(
+        query,
+        ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK
+      );
+      if (validationResponse.valid === false) {
+        throw new Error(validationResponse.explain);
+      }
     }
-
     setProgressAndText("Done Validating task successfully!", 30);
     setProgressAndText("Initiating tasks thinking", 45);
     setProgressAndText("Writing tasks..", 50);
@@ -470,6 +474,30 @@ const KanbanBoard = () => {
               placeholder="Estimated time (e.g., 2 hours, 1 day)"
               className="w-full mb-4 p-2 border rounded"
             />
+            <div className="mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="bypassValidation"
+                  checked={newTask.bypassValidation}
+                  onChange={handleNewTaskChange}
+                  className="mr-2"
+                />
+                Bypass Validation
+              </label>
+            </div>
+            <div className="mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="generateSubtasks"
+                  checked={newTask.generateSubtasks}
+                  onChange={handleNewTaskChange}
+                  className="mr-2"
+                />
+                Generate Subtasks
+              </label>
+            </div>
             <div className="flex justify-end">
               <button
                 onClick={closeModal}
