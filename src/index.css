@@ -16,9 +16,6 @@ body {
 
 .app {
   padding: 20px;
-  display: 'flex';
-  flexDirection: 'column';
-  minHeight: '100vh'
 }
 
 /* Tabs */
