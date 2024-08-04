@@ -374,6 +374,7 @@ const KanbanBoard = () => {
           estimatedTime: task.estimatedTime,
           column: task.column,
           parentId: task.parentId,
+          ...task,
         };
       });
     });
