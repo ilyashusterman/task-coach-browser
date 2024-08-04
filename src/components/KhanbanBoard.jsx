@@ -522,7 +522,12 @@ const KanbanBoard = () => {
                   onChange={handleNewTaskChange}
                   className="mr-2"
                 />
-                Generate Subtasks
+                <span className="relative flex items-center">
+                  Generate Subtasks
+                  <span className="ml-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse">
+                    New!
+                  </span>
+                </span>
               </label>
             </div>
             <div className="flex justify-end">

@@ -77,6 +77,10 @@ const App = () => {
           <KanbanBoard />
         </div>
         <div className={activeTab === "debugger" ? "" : "hidden"}>
+          <SystemPromptEditor
+            systemPrompt={systemPrompt}
+            setSystemPrompt={setSystemPrompt}
+          />
           <ChatBot
             isModelLoaded={isModelLoaded}
             chatHistory={chatHistory}
@@ -84,10 +88,6 @@ const App = () => {
             onSubmit={chatCompletion}
             isGenerating={isGenerating}
             abortWorker={abortWorker}
-          />
-          <SystemPromptEditor
-            systemPrompt={systemPrompt}
-            setSystemPrompt={setSystemPrompt}
           />
         </div>
       </div>

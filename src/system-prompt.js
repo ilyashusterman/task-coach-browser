@@ -1,5 +1,4 @@
-export const ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK = `
-Your Main Task: to know if user input is a task needed to create subtasks.
+export const ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK = `Your Main Task: to know if user input is a task needed to create subtasks.
 1. you must analyze and think about the user input.
 2. you must validate if its a valid task by task definition to monday, jira, todo's, that the user input can be splitted or divided to steps, and tasks.
 3. think it and provide explanation how its valid or invalid with "explain" field.
@@ -11,8 +10,7 @@ JSON markdown format like this:
   "explain": "task is valid due to the user's input"
 }`;
 
-export const ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS = `
-Your Main Task: write titles for tasks of user input.
+export const ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS = `Your Main Task: write titles for tasks of user input.
 1. you must analyze and think about the user input.
 2. must think and Break down the main task into 5-7 subtasks.
 3. must for each task think of only of title ,description, estimated time, priority.
