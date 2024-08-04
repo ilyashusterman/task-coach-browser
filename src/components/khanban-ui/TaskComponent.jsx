@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 const TaskComponent = ({
   task,
   columnId,
+  columnPrecent,
   updateTask,
   deleteTask,
   handleDragStart,
@@ -190,9 +191,7 @@ const TaskComponent = ({
           className="hidden"
           multiple
         />
-        <p className="text-gray-500 text-sm">
-          Drag 'n' drop files here, or click to select
-        </p>
+        <p className="text-gray-500 text-sm">Attachments</p>
       </div>
 
       <button
@@ -237,6 +236,14 @@ const TaskComponent = ({
           </div>
         </div>
       )}
+
+      {/* Progress Bar */}
+      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+        <div
+          className="bg-green-500 h-2 rounded-full"
+          style={{ width: `${columnPrecent * 100}%` }}
+        ></div>
+      </div>
     </div>
   );
 };

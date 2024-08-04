@@ -11,6 +11,8 @@ import {
 import { useModel } from "./contexts/ModelContext";
 import SystemPromptEditor from "./components/SystemPromptEditor";
 import KanbanBoard from "./components/KhanbanBoard";
+import AppBarMenu from "./components/AppBarMenu";
+import Footer from "./components/Footer";
 
 const App = () => {
   const [chatHistory, setChatHistory] = useState([]);
@@ -56,22 +58,9 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("kanban");
 
   return (
-    <div className="app">
+    <div className="flex flex-col min-h-screen">
+      <AppBarMenu setActiveTab={setActiveTab} activeTab={activeTab} />
       <StatusModel isModelLoaded={isModelLoaded} progress={progress} />
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === "kanban" ? "active" : ""}`}
-          onClick={() => setActiveTab("kanban")}
-        >
-          Kanban
-        </button>
-        <button
-          className={`tab ${activeTab === "debugger" ? "active" : ""}`}
-          onClick={() => setActiveTab("debugger")}
-        >
-          Debugger
-        </button>
-      </div>
       <div className="tab-content">
         <div className={activeTab === "kanban" ? "" : "hidden"}>
           <KanbanBoard />
@@ -89,6 +78,8 @@ const App = () => {
             isGenerating={isGenerating}
             abortWorker={abortWorker}
           />
+          <div className="flex-grow"></div>
+          <Footer />
         </div>
       </div>
     </div>

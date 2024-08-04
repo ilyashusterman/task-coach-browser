@@ -109,7 +109,6 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
       )
     );
   }, []);
-
   return (
     <div className="flex space-x-4 overflow-x-auto pb-4">
       {columns.map((column) => (
@@ -145,6 +144,13 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
               <TaskComponent
                 task={task}
                 columnId={column.id}
+                columnPrecent={
+                  initialColumns.findIndex(
+                    (columnIdx) => columnIdx.id == column.id
+                  ) /
+                    columns.length +
+                  (1 / columns.length) * 2
+                }
                 updateTask={updateTask}
                 deleteTask={deleteTask}
                 handleDragStart={handleDragStart}
