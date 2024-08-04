@@ -12,6 +12,7 @@ import {
   ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK,
   ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS,
   ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON,
+  ASSISTANT_SYSTEM_PROMPT_GENERATE_TASK,
 } from "../system-prompt";
 import { useModel } from "../contexts/ModelContext";
 import Board from "./khanban-ui/Board";
@@ -49,7 +50,7 @@ const KanbanBoard = () => {
     column: INITIAL_COLUMNS[0].id,
     id: uuidv4(),
     bypassValidation: false,
-    generateSubtasks: true,
+    generateSubtasks: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
@@ -151,17 +152,26 @@ const KanbanBoard = () => {
   const addTask = async () => {
     setIsLoading(true);
     closeModal();
+    setIsGenerating(true);
+    let describedTask;
     let subtasks = [];
     try {
-      subtasks = await generateSubtasks(newTask);
+      await validateTask(newTask);
+
+      if (newTask.generateSubtasks) {
+        subtasks = await generateSubtasks(newTask);
+      }
+
+      describedTask = await generateTask(newTask);
     } catch (err) {
       setError(err.message);
       setIsLoading(false);
       return;
     }
+    setIsGenerating(false);
     const parentTask = {
       id: `task-${uuidv4()}`,
-      ...newTask,
+      ...describedTask,
       isParent: true,
     };
     const newTaskWithId = {
@@ -248,19 +258,8 @@ const KanbanBoard = () => {
   };
   const generateSubtasks = async (task) => {
     const taskTitle = task.title;
-    setIsGenerating(true);
     setProgressAndText("Generating subtasks...", 0, 0);
     const query = `${taskTitle}`;
-    setProgressAndText("Validating Task...", 15);
-    if (!task.bypassValidation) {
-      const validationResponse = await chatCompletionJSON(
-        query,
-        ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK
-      );
-      if (validationResponse.valid === false) {
-        throw new Error(validationResponse.explain);
-      }
-    }
     setProgressAndText("Done Validating task successfully!", 30);
     setProgressAndText("Initiating tasks thinking", 45);
     setProgressAndText("Writing tasks..", 50);
@@ -275,12 +274,39 @@ const KanbanBoard = () => {
       throw new Error("Couldnt chatCompletionJSON Error" + e.message);
     }
     setProgressAndText("Converting tasks to JSON, successfully!", 100);
-    setIsGenerating(false);
     setLoadingProgress(0);
     setLoadingText("");
     return subtasks;
   };
-
+  async function validateTask(task) {
+    const prompt = `${task.title}${
+      task.description == "" ? "" : "\nDescription:" + task.description
+    }`;
+    setProgressAndText("Validating Task...", 15);
+    if (!task.bypassValidation) {
+      const validationResponse = await chatCompletionJSON(
+        prompt,
+        ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK
+      );
+      if (validationResponse.valid === false) {
+        throw new Error(validationResponse.explain);
+      }
+    }
+  }
+  const generateTask = async (task) => {
+    const prompt = `${task.title}${
+      task.description == "" ? "" : "\nDescription:" + task.description
+    }`;
+    setProgressAndText("Generating task..", 90);
+    const taskResponse = await chatCompletionJSON(
+      prompt,
+      ASSISTANT_SYSTEM_PROMPT_GENERATE_TASK
+    );
+    return {
+      ...task,
+      ...taskResponse,
+    };
+  };
   const stopGeneration = () => {
     setIsGenerating(false);
     setIsLoading(false);

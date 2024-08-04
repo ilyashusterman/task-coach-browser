@@ -58,3 +58,19 @@ Must provide a response in JSON format with the following structure:
     "description": "string"
   }]
 `;
+
+export const ASSISTANT_SYSTEM_PROMPT_GENERATE_TASK = `Your Main Task: write title and description of user input to JSON format.
+1. you must analyze and think about the user input.
+2. must think write it in jira format.
+3. must think of only of title ,description, estimated time, priority.
+4. Use "High", "Medium", or "Low" for the priority field.
+5. Estimated time should be in hours or days (e.g., "2 hours" or "3 days").
+6. must output only the task object json formatted response.
+Must provide a response in JSON format with the following structure:
+{
+    "title": "string",
+    "estimatedTime": "string",
+    "priority": "string",
+    "description": "string"
+  }
+`;
