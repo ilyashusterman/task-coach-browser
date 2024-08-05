@@ -12,20 +12,21 @@ self.addEventListener("message", async (event) => {
     key = undefined,
   } = event.data;
 
-  await instance.initialize(
-    (value) => self.postMessage({ status: "progress", value: value, key }),
-    (value) => self.postMessage({ status: "isModelLoaded", value: value, key })
-  );
   if (eventData === "initializingModel") {
-    return;
+    await instance.initialize(
+      (value) => self.postMessage({ status: "progress", value: value, key }),
+      (value) =>
+        self.postMessage({ status: "isModelLoaded", value: value, key })
+    );
   }
+
   const { tokenizer, llm, config } = instance.getAll();
+
   if (eventData === "terminateModel") {
     llm.abort();
     await llm.initilize_feed();
     self.postMessage({ status: "terminated", key: key });
     return;
-    // remove from memory llm
   }
 
   if (!tokenizer || !llm) return;
@@ -40,11 +41,11 @@ self.addEventListener("message", async (event) => {
   await llm.initilize_feed();
   const start_timer = performance.now();
   const output_index = llm.output_tokens.length + input_ids.length;
-
+  let isFirstToken = false;
   const output_tokens = await llm.generate(
     input_ids,
     (output_tokens) => {
-      if (output_tokens.length == input_ids.length + 1) {
+      if (!isFirstToken && output_tokens.length == input_ids.length + 1) {
         // time to first token
         const took = (performance.now() - start_timer) / 1000;
         console.log(
@@ -52,6 +53,7 @@ self.addEventListener("message", async (event) => {
             input_ids.length
           } tokens`
         );
+        isFirstToken = true;
       }
 
       const newText = token_to_text(
@@ -66,6 +68,8 @@ self.addEventListener("message", async (event) => {
     },
     { max_tokens: config.max_tokens }
   );
+
+  llm.abort();
 
   const finalText = token_to_text(
     tokenizer,

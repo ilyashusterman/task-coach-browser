@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { extractJsonString } from "../utils/messages";
+import { chatCompletionAPI } from "../utils/llm-api";
 const ModelContext = createContext();
 
 export const useModel = () => useContext(ModelContext);
@@ -19,6 +20,11 @@ export const ModelProvider = ({ children }) => {
     progress: 0,
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [disallowedDownloading, setDisallowedDownloading] = useState(true);
+  const [apiUrlBaseLLM, setApiUrlBaseLLM] = useState("");
+  const [modelApi, setApiModel] = useState("llama3.1");
+  // const [loadModel, setLoadModel] = useState("llama3.1");
+  const [displayModelSettings, setDisplayModelSettings] = useState(false);
   const chatCompletionJSON = async (query, sysPrompt) => {
     const response = await chatCompletion(query, sysPrompt);
     return extractJsonString(response);
@@ -30,6 +36,17 @@ export const ModelProvider = ({ children }) => {
     callBackUpdate = undefined,
     timeoutMiliseconds = 150000
   ) => {
+    if (apiUrlBaseLLM !== "") {
+      return chatCompletionAPI(
+        { query, prompt, baseUrl: apiUrlBaseLLM, model: modelApi },
+        callBackUpdate,
+        timeoutMiliseconds
+      );
+    }
+
+    if (!isModelLoaded) {
+      return "No model loaded";
+    }
     while (isGenerating) {
       //wait 2 seconds
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -140,8 +157,11 @@ export const ModelProvider = ({ children }) => {
   };
   const abortWorker = () => restartWorker;
   useEffect(() => {
+    if (disallowedDownloading) {
+      return;
+    }
     restartWorker(true);
-  }, []); // Empty dependency array ensures this runs only once
+  }, [disallowedDownloading]); // Empty dependency array ensures this runs only once
 
   return (
     <ModelContext.Provider
@@ -152,6 +172,14 @@ export const ModelProvider = ({ children }) => {
         chatCompletionJSON,
         chatCompletion,
         abortWorker,
+        disallowedDownloading,
+        setDisallowedDownloading,
+        apiUrlBaseLLM,
+        setApiUrlBaseLLM,
+        displayModelSettings,
+        setDisplayModelSettings,
+        modelApi,
+        setApiModel,
       }}
     >
       {children}

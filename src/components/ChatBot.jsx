@@ -13,7 +13,7 @@ const ChatBot = ({
   isGenerating,
   abortWorker,
 }) => {
-  const { isModelLoaded } = useModel();
+  const { isModelLoaded, apiUrlBaseLLM, modelApi } = useModel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
@@ -37,10 +37,20 @@ const ChatBot = ({
     setInput("");
   };
   const getButtonMessage = () => {
-    if (!isModelLoaded) {
+    if (modelApi !== "" && apiUrlBaseLLM !== "") {
+      return "Send";
+    }
+    if (!isModelLoaded && modelApi === "" && apiUrlBaseLLM === "") {
       return "Loading model...";
     }
     return isGenerating ? "Generating..." : "Send";
+  };
+  const isDisabled = () => {
+    if (modelApi !== "" && apiUrlBaseLLM !== "") {
+      return false;
+    }
+
+    return isGenerating || !isModelLoaded;
   };
   return (
     <div className="chat-container">
@@ -59,9 +69,9 @@ const ChatBot = ({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          disabled={isGenerating || !isModelLoaded}
+          disabled={isDisabled()}
         />
-        <button type="submit" disabled={isGenerating || !isModelLoaded}>
+        <button type="submit" disabled={isDisabled()}>
           {getButtonMessage()}
         </button>
 

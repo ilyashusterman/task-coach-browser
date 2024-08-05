@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import CoachGoalsLogo from "./CoachGoalsLogo";
 import "./AppBarMenu.css"; // Import the new CSS
+import { useModel } from "../contexts/ModelContext";
 
 const AppBarMenu = ({ activeTab, setActiveTab }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const { displayModelSettings, setDisplayModelSettings } = useModel();
   return (
     <div className="bg-green-600 text-green-800">
       <div className="container mx-auto flex justify-between items-center py-4">
@@ -55,9 +56,12 @@ const AppBarMenu = ({ activeTab, setActiveTab }) => {
           >
             Prompt Engineering
           </button>
-          <a href="#about" className="block py-1 px-4 text-green-800">
-            About
-          </a>
+          <button
+            className="block py-1 px-4 text-green-800"
+            onClick={() => setDisplayModelSettings(!displayModelSettings)}
+          >
+            Model control panel
+          </button>
         </div>
       </div>
     </div>

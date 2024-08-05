@@ -1,7 +1,7 @@
 // src/App.jsx
 import React, { useState, useRef, useEffect } from "react";
 import ChatBot from "./components/ChatBot";
-import StatusModel from "./components/StatusModel";
+import ModelSettingsEditor from "./components/ModelSettingsEditor";
 import {
   ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK,
   ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS,
@@ -21,7 +21,6 @@ const App = () => {
   );
   const {
     isModelLoaded,
-    progress,
     chatCompletion: chatCompletionBase,
     abortWorker,
   } = useModel();
@@ -60,7 +59,7 @@ const App = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <AppBarMenu setActiveTab={setActiveTab} activeTab={activeTab} />
-      <StatusModel isModelLoaded={isModelLoaded} progress={progress} />
+      <ModelSettingsEditor />
       <div className="tab-content">
         <div className={activeTab === "kanban" ? "" : "hidden"}>
           <KanbanBoard />
