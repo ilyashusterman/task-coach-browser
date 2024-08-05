@@ -150,7 +150,6 @@ const ModelSettingsEditor = () => {
             onChange={(e) =>
               setUserModelSettings({ apiUrlBaseLLM: e.target.value })
             }
-            placeholder="http://localhost:11434/api/chat"
             className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
           />
           <p className="text-xs text-gray-500">
