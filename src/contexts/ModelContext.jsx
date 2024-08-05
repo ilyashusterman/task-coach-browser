@@ -21,13 +21,26 @@ export const ModelProvider = ({ children }) => {
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [disallowedDownloading, setDisallowedDownloading] = useState(true);
-  const [apiUrlBaseLLM, setApiUrlBaseLLM] = useState("");
+  const [apiUrlBaseLLM, setApiUrlBaseLLM] = useState(
+    "http://localhost:11434/api/chat"
+  );
   const [modelApi, setApiModel] = useState("llama3.1");
-  // const [loadModel, setLoadModel] = useState("llama3.1");
+  const [useAPI, setUseAPI] = useState(false);
   const [displayModelSettings, setDisplayModelSettings] = useState(false);
-  const chatCompletionJSON = async (query, sysPrompt) => {
-    const response = await chatCompletion(query, sysPrompt);
-    return extractJsonString(response);
+  const chatCompletionJSON = async (query, sysPrompt, retries = 3) => {
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        const response = await chatCompletion(query, sysPrompt);
+        return extractJsonString(response);
+      } catch (error) {
+        console.error(`Attempt ${attempt + 1} failed:`, error);
+        attempt++;
+        if (attempt >= retries) {
+          throw new Error(`Failed after ${retries} attempts`);
+        }
+      }
+    }
   };
 
   const chatCompletion = async (
@@ -36,8 +49,9 @@ export const ModelProvider = ({ children }) => {
     callBackUpdate = undefined,
     timeoutMiliseconds = 150000
   ) => {
-    if (apiUrlBaseLLM !== "") {
-      return chatCompletionAPI(
+    debugger;
+    if (useAPI) {
+      return await chatCompletionAPI(
         { query, prompt, baseUrl: apiUrlBaseLLM, model: modelApi },
         callBackUpdate,
         timeoutMiliseconds
@@ -180,6 +194,8 @@ export const ModelProvider = ({ children }) => {
         setDisplayModelSettings,
         modelApi,
         setApiModel,
+        useAPI,
+        setUseAPI,
       }}
     >
       {children}

@@ -58,7 +58,33 @@ export const token_to_text = (tokenizer, tokens, startidx, config) => {
   });
 };
 
+// Step 1: Define the Regular Expression
+// Step 2: Write the Function
+function findJsonInString(inputString) {
+  // Use the regular expression to match the JSON object
+  const match = inputString.match(/\{[^]*?\}/);
+
+  // If a match is found, return the parsed JSON object
+  if (match) {
+    try {
+      // Step 3: Parse the JSON
+      const jsonObject = JSON.parse(match[0]);
+      return jsonObject;
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      return null;
+    }
+  } else {
+    console.error("No JSON object found in the input string.");
+    return null;
+  }
+}
+
 export function extractJsonString(text) {
+  const parsedText = findJsonInString(text);
+  if (parsedText) {
+    return parsedText;
+  }
   const regex = /```json\s*([\s\S]*?)\s*```/;
   const match = text.match(regex);
   if (match && match[1]) {

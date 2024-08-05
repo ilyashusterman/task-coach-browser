@@ -1,21 +1,19 @@
 import axios from "axios";
 
 export async function chatCompletionAPI(
-  { query, prompt, baseUrl: apiUrlBaseLLM, model },
+  { query, prompt, baseUrl: url, model },
   callBackUpdate,
   timeoutMiliseconds
 ) {
-  let accumulatedText = "";
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMiliseconds);
-  let isFirstToken = false;
-  let firstToken = "";
+
   try {
     const response = await axios({
       method: "post",
-      url: `${apiUrlBaseLLM}`,
+      url,
       data: {
-        model,
+        model: model,
         messages: [
           {
             role: "system",
@@ -26,53 +24,20 @@ export async function chatCompletionAPI(
             content: query,
           },
         ],
-        stream: true,
+        stream: false,
       },
-      responseType: "text",
       signal: controller.signal,
-      onDownloadProgress: (progressEvent) => {
-        let responseText =
-          progressEvent?.event?.currentTarget?.responseText || "";
-
-        if (
-          progressEvent.event.currentTarget &&
-          progressEvent.event.currentTarget.response
-        ) {
-          responseText = progressEvent.event.currentTarget.response;
-        }
-        // Fallback to progressEvent.target for compatibility
-        else if (
-          progressEvent.event.target &&
-          progressEvent.event.target.responseText
-        ) {
-          responseText = progressEvent.event.target.responseText;
-        }
-
-        if (responseText) {
-          const lines = responseText
-            .split("\n")
-            .filter((line) => line.trim() !== "")
-            // last lines
-            .slice(-1);
-
-          for (const line of lines) {
-            let toJsonLine = line.startsWith("data: ") ? line.slice(6) : line;
-            try {
-              const json = JSON.parse(toJsonLine);
-              if (json.message && json.message.content) {
-                accumulatedText += json.message.content;
-                callBackUpdate(accumulatedText);
-              }
-            } catch (error) {
-              console.error("Error parsing (data: tag) JSON:", error);
-            }
-          }
-        }
-      },
     });
 
     clearTimeout(timeoutId);
-    return accumulatedText;
+
+    // Call the callback with the complete response
+    const fullResponse = response.data.message.content;
+    if (callBackUpdate) {
+      callBackUpdate(fullResponse);
+    }
+
+    return fullResponse;
   } catch (error) {
     clearTimeout(timeoutId);
     if (axios.isCancel(error)) {
@@ -83,3 +48,23 @@ export async function chatCompletionAPI(
     throw error;
   }
 }
+
+// Example usage:
+// (async () => {
+//   try {
+//     const finalText = await chatCompletionAPI(
+//       {
+//         query: "Why is the sky blue?",
+//         prompt: "You are a helpful assistant.",
+//         baseUrl: "http://localhost:11434"
+//       },
+//       (response) => {
+//         console.log("Received response:", response);
+//       },
+//       30000 // 30 seconds timeout
+//     );
+//     console.log("\nFinal complete response:", finalText);
+//   } catch (error) {
+//     console.error("An error occurred:", error);
+//   }
+// })();

@@ -27,7 +27,8 @@ const INITIAL_COLUMNS = [
 ];
 
 const KanbanBoard = () => {
-  const { chatCompletion, chatCompletionJSON, isModelLoaded } = useModel();
+  const { chatCompletion, chatCompletionJSON, isModelLoaded, useAPI } =
+    useModel();
   const [board, setBoardBase] = useState({
     id: "board-1",
     title: "My Kanban Board",
@@ -129,7 +130,8 @@ const KanbanBoard = () => {
   }, []);
 
   useEffect(() => {
-    if (isModelLoaded) {
+    debugger;
+    if (isModelLoaded || useAPI) {
       chatCompletion("Hello", "You are a friendly assistant.", setGreeting);
     } else {
       setGreeting("Hello lets create tasks");
@@ -160,6 +162,10 @@ const KanbanBoard = () => {
 
       if (newTask.generateSubtasks) {
         subtasks = await generateSubtasks(newTask);
+        // if subtasks is a object then add it to array
+        if (typeof subtasks === "object") {
+          subtasks = [subtasks];
+        }
       }
 
       describedTask = await generateTask(newTask);

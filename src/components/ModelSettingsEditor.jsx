@@ -12,6 +12,8 @@ const ModelSettingsEditor = () => {
     displayModelSettings,
     modelApi,
     setApiModel,
+    useAPI,
+    setUseAPI,
   } = useModel();
 
   const [userModelSettings, setUserModelSettingsBase] = useState({});
@@ -37,6 +39,7 @@ const ModelSettingsEditor = () => {
         disallowedDownloading,
         apiUrlBaseLLM,
         modelApi,
+        useAPI,
       };
     } else {
       userModelSettingsLocalStorage = JSON.parse(
@@ -64,6 +67,7 @@ const ModelSettingsEditor = () => {
     ) {
       setApiModel(userModelSettingsLocalStorage.apiModel);
     }
+    setUseAPI(userModelSettingsLocalStorage.useAPI);
   };
 
   if (!displayModelSettings) return null;
@@ -131,6 +135,33 @@ const ModelSettingsEditor = () => {
             />
             <label
               htmlFor="allow-download"
+              className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"
+            ></label>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="allow-download"
+            className="text-sm font-medium text-gray-700"
+          >
+            Use API
+          </label>
+          <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+            <input
+              type="checkbox"
+              name="use-api"
+              id="use-api"
+              checked={useAPI}
+              onChange={(e) => {
+                setUserModelSettings({
+                  useAPI: e.target.checked,
+                });
+                setUseAPI(e.target.checked);
+              }}
+              className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+            />
+            <label
+              htmlFor="use-api"
               className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"
             ></label>
           </div>
