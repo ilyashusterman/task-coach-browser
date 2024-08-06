@@ -83,10 +83,6 @@ export const ModelProvider = ({ children }) => {
     if (!isModelLoaded) {
       return "No model loaded";
     }
-    while (isGenerating) {
-      //wait 2 seconds
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
 
     setIsGenerating(true);
     const uuidKey = uuidv4();
@@ -118,8 +114,16 @@ export const ModelProvider = ({ children }) => {
             callBackUpdate(text);
           }
           restartWorker(false).then(() => {
-            setIsGenerating(false);
-            resolve(text);
+            new Promise((resolveWaitGenerating) => {
+              const result = setIsGenerating(false);
+              resolveWaitGenerating(result);
+            }).then(() => {
+              new Promise((resolveWait) => setTimeout(resolveWait, 2000)).then(
+                () => {
+                  resolve(text);
+                }
+              );
+            });
           });
         }
         if (status === "stream") {

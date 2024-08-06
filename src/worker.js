@@ -46,7 +46,7 @@ self.addEventListener("message", async (event) => {
     await llm.initilize_feed();
     const start_timer = performance.now();
     const output_index = llm.output_tokens.length + input_ids.length;
-    console.log("Generating...");
+    console.log("Generating... key:", key);
     const output_tokens = await llm.generate(
       input_ids,
       (output_tokens) => {
@@ -81,6 +81,7 @@ self.addEventListener("message", async (event) => {
       output_index,
       config
     );
+    console.log("Done Generating... key:", key);
     self.postMessage({ status: "final", text: finalText, key: key });
   }
   return;
