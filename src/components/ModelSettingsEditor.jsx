@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useModel } from "../contexts/ModelContext";
+import { useModel, USER_SETTINGS } from "../contexts/ModelContext";
+import "./ModelSettingsEditor.css";
 
 const ModelSettingsEditor = () => {
   const {
@@ -15,10 +16,17 @@ const ModelSettingsEditor = () => {
     useAPI,
     setUseAPI,
   } = useModel();
-
-  const [userModelSettings, setUserModelSettingsBase] = useState({});
+  const [userModelSettings, setUserModelSettingsBase] = useState(USER_SETTINGS);
 
   const setUserModelSettings = ({ ...props }) => {
+    if (props.useAPI) {
+      props.disallowedDownloading = false;
+    }
+    const newSettings = saveSettingsLocalStorage(props);
+    setSettingsContextProvider(newSettings);
+  };
+
+  const saveSettingsLocalStorage = ({ ...props }) => {
     const newSettings = {
       modified: new Date().toISOString(),
       ...userModelSettings,
@@ -26,28 +34,10 @@ const ModelSettingsEditor = () => {
     };
     setUserModelSettingsBase(newSettings);
     localStorage.setItem("userModelSettings", JSON.stringify(newSettings));
-    setSettingsContextProvider(newSettings);
+    return newSettings;
   };
-
   useEffect(() => {
-    let userModelSettingsLocalStorage;
-    let userModelSettingsLocalStorageRaw =
-      localStorage.getItem("userModelSettings");
-
-    if (!userModelSettingsLocalStorageRaw) {
-      userModelSettingsLocalStorage = {
-        disallowedDownloading,
-        apiUrlBaseLLM,
-        modelApi,
-        useAPI,
-      };
-    } else {
-      userModelSettingsLocalStorage = JSON.parse(
-        userModelSettingsLocalStorageRaw
-      );
-    }
-    setUserModelSettings(userModelSettingsLocalStorage);
-    setSettingsContextProvider(userModelSettingsLocalStorage);
+    setUserModelSettings(USER_SETTINGS);
   }, []);
 
   const setSettingsContextProvider = (userModelSettingsLocalStorage) => {
@@ -67,7 +57,9 @@ const ModelSettingsEditor = () => {
     ) {
       setApiModel(userModelSettingsLocalStorage.apiModel);
     }
-    setUseAPI(userModelSettingsLocalStorage.useAPI);
+    if (userModelSettingsLocalStorage.useAPI) {
+      setUseAPI(userModelSettingsLocalStorage.useAPI);
+    }
   };
 
   if (!displayModelSettings) return null;
@@ -139,9 +131,10 @@ const ModelSettingsEditor = () => {
             ></label>
           </div>
         </div>
+
         <div className="flex items-center justify-between">
           <label
-            htmlFor="allow-download"
+            htmlFor="use-api"
             className="text-sm font-medium text-gray-700"
           >
             Use API

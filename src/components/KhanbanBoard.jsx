@@ -130,7 +130,6 @@ const KanbanBoard = () => {
   }, []);
 
   useEffect(() => {
-    debugger;
     if (isModelLoaded || useAPI) {
       chatCompletion("Hello", "You are a friendly assistant.", setGreeting);
     } else {

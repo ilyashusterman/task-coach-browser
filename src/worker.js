@@ -23,6 +23,10 @@ self.addEventListener("message", async (event) => {
   const { tokenizer, llm, config } = instance.getAll();
 
   if (eventData === "terminateModel") {
+    if (llm.abort === undefined) {
+      self.postMessage({ status: "terminated", key: key });
+      return;
+    }
     llm.abort();
     await llm.initilize_feed();
     self.postMessage({ status: "terminated", key: key });

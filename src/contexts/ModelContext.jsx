@@ -12,6 +12,27 @@ const ModelContext = createContext();
 
 export const useModel = () => useContext(ModelContext);
 
+export const getUserSettings = () => {
+  let userModelSettingsLocalStorage;
+  let userModelSettingsLocalStorageRaw =
+    localStorage.getItem("userModelSettings");
+
+  if (!userModelSettingsLocalStorageRaw) {
+    userModelSettingsLocalStorage = {
+      disallowedDownloading: true,
+      apiUrlBaseLLM: "http://localhost:11434/api/chat",
+      modelApi: "llama3.1",
+      useAPI: false,
+    };
+  } else {
+    userModelSettingsLocalStorage = JSON.parse(
+      userModelSettingsLocalStorageRaw
+    );
+  }
+  return userModelSettingsLocalStorage;
+};
+export const USER_SETTINGS = getUserSettings();
+
 export const ModelProvider = ({ children }) => {
   const worker = useRef(null);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
@@ -20,12 +41,14 @@ export const ModelProvider = ({ children }) => {
     progress: 0,
   });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [disallowedDownloading, setDisallowedDownloading] = useState(true);
-  const [apiUrlBaseLLM, setApiUrlBaseLLM] = useState(
-    "http://localhost:11434/api/chat"
+  const [disallowedDownloading, setDisallowedDownloading] = useState(
+    USER_SETTINGS.disallowedDownloading
   );
-  const [modelApi, setApiModel] = useState("llama3.1");
-  const [useAPI, setUseAPI] = useState(false);
+  const [apiUrlBaseLLM, setApiUrlBaseLLM] = useState(
+    USER_SETTINGS.apiUrlBaseLLM
+  );
+  const [modelApi, setApiModel] = useState(USER_SETTINGS.modelApi);
+  const [useAPI, setUseAPI] = useState(USER_SETTINGS.useAPI);
   const [displayModelSettings, setDisplayModelSettings] = useState(false);
   const chatCompletionJSON = async (query, sysPrompt, retries = 3) => {
     let attempt = 0;
@@ -49,7 +72,6 @@ export const ModelProvider = ({ children }) => {
     callBackUpdate = undefined,
     timeoutMiliseconds = 150000
   ) => {
-    debugger;
     if (useAPI) {
       return await chatCompletionAPI(
         { query, prompt, baseUrl: apiUrlBaseLLM, model: modelApi },
@@ -171,7 +193,7 @@ export const ModelProvider = ({ children }) => {
   };
   const abortWorker = () => restartWorker;
   useEffect(() => {
-    if (disallowedDownloading) {
+    if (useAPI && disallowedDownloading) {
       return;
     }
     restartWorker(true);
