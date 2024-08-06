@@ -88,6 +88,7 @@ const TaskComponent = ({
       className={`bg-white p-3 mb-2 rounded shadow-sm transition-all duration-300 cursor-move
         ${isDragging ? "opacity-50" : ""}
         ${isHovered ? "shadow-md scale-105" : ""}
+        ${columnId === "blocked" ? "border-l-4 border-red-500" : ""}
       `}
       draggable
       onDragStart={(e) => handleDragStart(task, e)}
@@ -238,12 +239,19 @@ const TaskComponent = ({
       )}
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-        <div
-          className="bg-green-500 h-2 rounded-full"
-          style={{ width: `${columnPrecent * 100}%` }}
-        ></div>
-      </div>
+      {/* Progress Bar or Blocked Label */}
+      {columnId === "blocked" ? (
+        <div className="mt-2 bg-red-100 text-red-800 text-xs font-semibold p-2 rounded">
+          BLOCKED
+        </div>
+      ) : (
+        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div
+            className="bg-green-500 h-2 rounded-full"
+            style={{ width: `${columnPrecent * 100}%` }}
+          ></div>
+        </div>
+      )}
     </div>
   );
 };
