@@ -12,6 +12,11 @@ export async function chatCompletionAPI(
     const response = await axios({
       method: "post",
       url,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Origin: "http://localhost:8081", // Assuming your Vite app runs on localhost:3000
+      },
       data: {
         model: model,
         messages: [
