@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { X } from "lucide-react";
 
+const defaultColor = "#22c55e";
+
 const TaskComponent = ({
   task,
   columnId,
@@ -15,7 +17,12 @@ const TaskComponent = ({
   const [isHovered, setIsHovered] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState(null);
   const fileInputRef = useRef(null);
-
+  const getColor = () => {
+    if (task.color) {
+      return task.color.color;
+    }
+    return defaultColor;
+  };
   const handleFileUpload = (e) => {
     const files = e.target.files;
     if (files) {
@@ -106,6 +113,9 @@ const TaskComponent = ({
               title: e.target.value,
             })
           }
+          style={{
+            color: getColor(),
+          }}
           className="font-semibold text-green-700 w-full mr-2 bg-transparent border-b border-transparent focus:border-green-300 focus:outline-none transition-all duration-300"
         />
         <span className="text-xs text-green-600">{task.estimatedTime}</span>
@@ -247,8 +257,11 @@ const TaskComponent = ({
       ) : (
         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
           <div
-            className="bg-green-500 h-2 rounded-full"
-            style={{ width: `${columnPrecent * 100}%` }}
+            className="h-2 rounded-full"
+            style={{
+              backgroundColor: getColor(),
+              width: `${columnPrecent * 100}%`,
+            }}
           ></div>
         </div>
       )}
