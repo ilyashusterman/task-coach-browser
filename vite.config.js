@@ -25,6 +25,7 @@ export default defineConfig({
     wasm(),
   ],
   build: {
+    target: "es2022",
     outDir: "dist",
     rollupOptions: {
       input: {
