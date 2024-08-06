@@ -20,7 +20,7 @@ const ModelSettingsEditor = () => {
 
   const setUserModelSettings = ({ ...props }) => {
     if (props.useAPI) {
-      props.disallowedDownloading = false;
+      props.disallowedDownloading = true;
     }
     const newSettings = saveSettingsLocalStorage(props);
     setSettingsContextProvider(newSettings);
