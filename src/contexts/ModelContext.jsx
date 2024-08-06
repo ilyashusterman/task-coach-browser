@@ -50,11 +50,22 @@ export const ModelProvider = ({ children }) => {
   const [modelApi, setApiModel] = useState(USER_SETTINGS.modelApi);
   const [useAPI, setUseAPI] = useState(USER_SETTINGS.useAPI);
   const [displayModelSettings, setDisplayModelSettings] = useState(false);
-  const chatCompletionJSON = async (query, sysPrompt, retries = 3) => {
+  const chatCompletionJSON = async (
+    query,
+    sysPrompt,
+    retries = 3,
+    callBackUpdate = undefined,
+    timeoutMiliseconds = 150000
+  ) => {
     let attempt = 0;
     while (attempt < retries) {
       try {
-        const response = await chatCompletion(query, sysPrompt);
+        const response = await chatCompletion(
+          query,
+          sysPrompt,
+          callBackUpdate,
+          timeoutMiliseconds
+        );
         return extractJsonString(response);
       } catch (error) {
         console.error(`Attempt ${attempt + 1} failed:`, error);
@@ -165,9 +176,9 @@ export const ModelProvider = ({ children }) => {
       await worker.current.terminate();
       worker.current = null;
     }
-    initWorker(isInitial);
+    return await initWorker(isInitial);
   };
-  const initWorker = (isInitial = true) => {
+  const initWorker = async (isInitial = true) => {
     if (!worker.current) {
       const uuidKey = uuidv4();
       // Create the worker if it does not yet exist.
@@ -179,20 +190,27 @@ export const ModelProvider = ({ children }) => {
         event: "initializingModel",
         key: uuidKey,
       });
-      worker.current.onmessage = (event) => {
-        if (event.data.key === undefined && event.data?.key !== uuidKey) {
-          return;
-        }
-        const { status, value } = event.data;
-        if (status === "progress") {
-          if (isInitial) {
-            setProgress(value);
+      console.log("initializingModel ", uuidKey);
+      // wait for 1 seconds the worker to finish initializing the model.
+      await new Promise((resolve, reject) => {
+        worker.current.onmessage = (event) => {
+          if (event.data.key === undefined && event.data?.key !== uuidKey) {
+            return;
           }
-        }
-        if (status === "isModelLoaded") {
-          setIsModelLoaded(value);
-        }
-      };
+          console.log("Got initializingModel ", event.data?.key);
+          const { status, value } = event.data;
+          if (status === "progress") {
+            if (isInitial) {
+              setProgress(value);
+              resolve(true);
+            }
+          }
+          if (status === "isModelLoaded") {
+            setIsModelLoaded(value);
+            resolve(true);
+          }
+        };
+      });
     }
   };
   const abortWorker = () => restartWorker;
@@ -222,6 +240,7 @@ export const ModelProvider = ({ children }) => {
         setApiModel,
         useAPI,
         setUseAPI,
+        isGenerating,
       }}
     >
       {children}

@@ -6,14 +6,8 @@ import { useModel } from "../contexts/ModelContext";
 
 marked.use({ mangle: false, headerIds: false });
 
-const ChatBot = ({
-  chatHistory,
-  setChatHistory,
-  onSubmit,
-  isGenerating,
-  abortWorker,
-}) => {
-  const { isModelLoaded, apiUrlBaseLLM, modelApi } = useModel();
+const ChatBot = ({ chatHistory, setChatHistory, onSubmit, abortWorker }) => {
+  const { isModelLoaded, apiUrlBaseLLM, modelApi, isGenerating } = useModel();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 

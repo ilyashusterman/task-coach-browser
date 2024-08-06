@@ -19,16 +19,6 @@ export const ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS = `Your Main Task: write titles
 6. must output only the list tasks markdown formatted response.
 do this step by step.`;
 
-export const MAP_TASK_NAME = {
-  0: "First task",
-  1: "Second task",
-  2: "Third task",
-  3: "Fourth task",
-  4: "Fifth task",
-  5: "Sixth task",
-  6: "Seventh task",
-};
-
 export const ASSISTANT_SYSTEM_PROMPT_TO_JSON = `Your Main Task: convert user input to JSON format.
 1. you must analyze and think about the user input.
 2. must output only the list tasks json formatted response.

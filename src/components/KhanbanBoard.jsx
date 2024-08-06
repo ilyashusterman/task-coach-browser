@@ -6,6 +6,8 @@ import React, {
   useMemo,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { encoding_for_model } from "@dqbd/tiktoken";
+
 import LoadingIndicator from "./LoadingIndicator";
 import {
   ASSISTANT_SYSTEM_PROMPT_TO_JSON,
@@ -25,6 +27,15 @@ const INITIAL_COLUMNS = [
   { id: "done", title: "Done", tasks: {} },
   { id: "blocked", title: "Blocked", tasks: {} },
 ];
+const MAX_TOKENS = 15;
+
+async function getTokenCount(text, model = "gpt-4") {
+  const encoder = await encoding_for_model(model);
+  const tokens = encoder.encode(text);
+  const tokenCount = tokens.length;
+  encoder.free(); // Important: Free up the memory when done
+  return tokenCount;
+}
 
 const KanbanBoard = () => {
   const { chatCompletion, chatCompletionJSON, isModelLoaded, useAPI } =
@@ -140,15 +151,24 @@ const KanbanBoard = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  const handleNewTaskChange = (e) => {
+  const handleNewTaskChange = async (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setNewTask({
+    let updatedTask = {
       ...newTask,
       [e.target.name]: value,
       column: INITIAL_COLUMNS[0].id,
       id: uuidv4(),
-    });
+    };
+
+    if (e.target.name === "title" || e.target.name === "description") {
+      const tokenCount = await getTokenCount(value);
+      if (tokenCount > MAX_TOKENS) {
+        return; // Don't update if token limit is exceeded
+      }
+      updatedTask[`${e.target.name}Tokens`] = tokenCount;
+    }
+    setNewTask(updatedTask);
   };
   const addTask = async () => {
     setIsLoading(true);
@@ -162,7 +182,7 @@ const KanbanBoard = () => {
       if (newTask.generateSubtasks) {
         subtasks = await generateSubtasks(newTask);
         // if subtasks is a object then add it to array
-        if (typeof subtasks === "object") {
+        if (!Array.isArray(subtasks)) {
           subtasks = [subtasks];
         }
       }
@@ -272,7 +292,9 @@ const KanbanBoard = () => {
     try {
       subtasks = await chatCompletionJSON(
         query,
-        ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON
+        ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON,
+        3,
+        console.log
       );
       setProgressAndText("Converting text tasks to JSON", 75);
     } catch (e) {
@@ -479,6 +501,9 @@ const KanbanBoard = () => {
               placeholder="Enter a task"
               className="w-full mb-4 p-2 border rounded"
             />
+            <p className="text-sm text-gray-500 mb-2">
+              Title Tokens: {newTask.titleTokens}/{MAX_TOKENS}
+            </p>
             <textarea
               name="description"
               value={newTask.description}
@@ -486,6 +511,9 @@ const KanbanBoard = () => {
               placeholder="Description"
               className="w-full mb-4 p-2 border rounded"
             />
+            <p className="text-sm text-gray-500 mb-2">
+              Description Tokens: {newTask.descriptionTokens}/{MAX_TOKENS}
+            </p>
             <div className="mb-4">
               <label className="block mb-2">Priority:</label>
               <select

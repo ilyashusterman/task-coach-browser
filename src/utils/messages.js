@@ -81,22 +81,21 @@ function findJsonInString(inputString) {
 }
 
 export function extractJsonString(text) {
-  const parsedText = findJsonInString(text);
-  if (parsedText) {
-    return parsedText;
-  }
   const regex = /```json\s*([\s\S]*?)\s*```/;
   const match = text.match(regex);
-  if (match && match[1]) {
-    try {
+
+  try {
+    if (match && match[1]) {
       const jsonString = match[1];
       const jsonObject = JSON.parse(jsonString);
       return jsonObject;
-    } catch (error) {
-      console.error("Invalid JSON format:", error);
+    } else {
+      return JSON.parse(text);
     }
-  } else {
-    return JSON.parse(text);
+  } catch (e) {
+    const parsedText = findJsonInString(text);
+    if (parsedText) {
+      return parsedText;
+    }
   }
-  return JSON.parse(text);
 }

@@ -24,6 +24,7 @@ self.addEventListener("message", async (event) => {
 
   if (eventData === "terminateModel") {
     if (llm.abort === undefined) {
+      console.log("terminated model");
       self.postMessage({ status: "terminated", key: key });
       return;
     }
