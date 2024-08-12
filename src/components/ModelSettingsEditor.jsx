@@ -15,6 +15,12 @@ const ModelSettingsEditor = () => {
     setApiModel,
     useAPI,
     setUseAPI,
+    useReplicateAPI,
+    setUseReplicateAPI,
+    replicateApiToken,
+    setReplicateApiToken,
+    replicateModelPath,
+    setReplicateModelPath,
   } = useModel();
   const [userModelSettings, setUserModelSettingsBase] = useState(USER_SETTINGS);
 
@@ -36,6 +42,7 @@ const ModelSettingsEditor = () => {
     localStorage.setItem("userModelSettings", JSON.stringify(newSettings));
     return newSettings;
   };
+
   useEffect(() => {
     setUserModelSettings(USER_SETTINGS);
   }, []);
@@ -59,6 +66,15 @@ const ModelSettingsEditor = () => {
     }
     if (userModelSettingsLocalStorage.useAPI) {
       setUseAPI(userModelSettingsLocalStorage.useAPI);
+    }
+    if (userModelSettingsLocalStorage.useReplicateAPI !== undefined) {
+      setUseReplicateAPI(userModelSettingsLocalStorage.useReplicateAPI);
+    }
+    if (userModelSettingsLocalStorage.replicateApiToken) {
+      setReplicateApiToken(userModelSettingsLocalStorage.replicateApiToken);
+    }
+    if (userModelSettingsLocalStorage.replicateModelPath) {
+      setReplicateModelPath(userModelSettingsLocalStorage.replicateModelPath);
     }
   };
 
@@ -134,10 +150,89 @@ const ModelSettingsEditor = () => {
 
         <div className="flex items-center justify-between">
           <label
+            htmlFor="use-replicate-api"
+            className="text-sm font-medium text-gray-700"
+          >
+            Use Replicate API
+          </label>
+          <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+            <input
+              type="checkbox"
+              name="use-replicate-api"
+              id="use-replicate-api"
+              checked={useReplicateAPI}
+              onChange={(e) => {
+                setUserModelSettings({
+                  useReplicateAPI: e.target.checked,
+                });
+                setUseReplicateAPI(e.target.checked);
+              }}
+              className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+            />
+            <label
+              htmlFor="use-replicate-api"
+              className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"
+            ></label>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="replicate-api-token"
+            className="text-sm font-medium text-gray-700 block"
+          >
+            Replicate API Token
+          </label>
+          <input
+            id="replicate-api-token"
+            type="password"
+            value={replicateApiToken}
+            onChange={(e) =>
+              setUserModelSettings({ replicateApiToken: e.target.value })
+            }
+            placeholder="Enter Replicate API token"
+            className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="replicate-model-path"
+            className="text-sm font-medium text-gray-700 block"
+          >
+            Replicate Model Path
+          </label>
+          <input
+            id="replicate-model-path"
+            type="text"
+            value={replicateModelPath}
+            onChange={(e) =>
+              setUserModelSettings({ replicateModelPath: e.target.value })
+            }
+            placeholder="Enter Replicate model path"
+            className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <p className="text-base text-gray-500">
+          You need a{" "}
+          <a
+            className="underline"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://replicate.com/account/api-tokens?utm_campaign=llama2ai&amp;utm_source=project"
+          >
+            Replicate API token
+          </a>{" "}
+          to run this demo. Copy it and paste above.
+        </p>
+
+        <div className="flex items-center justify-between">
+          <label
             htmlFor="use-api"
             className="text-sm font-medium text-gray-700"
           >
-            Use API
+            Use local API
           </label>
           <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
             <input

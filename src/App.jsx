@@ -13,6 +13,7 @@ import SystemPromptEditor from "./components/SystemPromptEditor";
 import KanbanBoard from "./components/KhanbanBoard";
 import AppBarMenu from "./components/AppBarMenu";
 import Footer from "./components/Footer";
+import HuggingFaceComponent from "./components/HuggingFaceComponent";
 
 const App = () => {
   const [chatHistory, setChatHistory] = useState([]);
@@ -79,6 +80,9 @@ const App = () => {
           />
           <div className="flex-grow"></div>
           <Footer />
+        </div>
+        <div className={activeTab === "huggingface" ? "" : "hidden"}>
+          <HuggingFaceComponent />
         </div>
       </div>
     </div>

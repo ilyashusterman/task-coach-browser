@@ -62,6 +62,14 @@ const AppBarMenu = ({ activeTab, setActiveTab }) => {
           >
             Model control panel
           </button>
+          <button
+            className={`tab ${
+              activeTab === "huggingface" ? "active" : ""
+            } block py-1 px-4 text-green-800`}
+            onClick={() => setActiveTab("huggingface")}
+          >
+            HuggingFace Testing models
+          </button>
         </div>
       </div>
     </div>

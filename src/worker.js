@@ -37,7 +37,18 @@ self.addEventListener("message", async (event) => {
   if (eventData === "chatCompletion") {
     if (!tokenizer || !llm) return;
     const prompt = generatePrompt(query, systemPrompt);
-
+    if (llm.pipeline) {
+      const generator = await llm.pipeline;
+      const output = await generator(prompt, {
+        max_length: 9999,
+        num_return_sequences: 1,
+      });
+      console.log("output", output);
+      const outputText = output[0].generated_text;
+      console.log("outputText", outputText);
+      self.postMessage({ status: "final", text: outputText, key: key });
+      return;
+    }
     const { input_ids } = await tokenizer(prompt, {
       return_tensor: false,
       padding: true,

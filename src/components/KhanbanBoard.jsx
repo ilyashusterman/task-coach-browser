@@ -716,12 +716,6 @@ const KanbanBoard = () => {
           Add Task
         </button>
         <button
-          onClick={() => saveBoardState()}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300"
-        >
-          Save Board State
-        </button>
-        <button
           onClick={exportBoardState}
           className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded transition duration-300"
         >

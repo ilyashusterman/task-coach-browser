@@ -1,13 +1,25 @@
 export const MODELS = {
+  // phi3: {
+  //   name: "phi3",
+  //   path: "microsoft/Phi-3-mini-4k-instruct-onnx-web",
+  //   externaldata: true,
+  // },
   phi3: {
     name: "phi3",
     path: "microsoft/Phi-3-mini-4k-instruct-onnx-web",
     externaldata: true,
+    file: "model",
   },
   phi3dev: {
     name: "phi3dev",
     path: "schmuell/Phi-3-mini-4k-instruct-onnx-web",
     externaldata: true,
+  },
+  "SmolLM-135M": {
+    name: "SmolLM-135M",
+    path: "HuggingFaceTB/SmolLM-135M",
+    externaldata: true,
+    file: "model",
   },
 };
 

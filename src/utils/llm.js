@@ -1,5 +1,6 @@
 import * as ort from "onnxruntime-web/webgpu";
 import { fetchAndCache } from "./utils";
+import { pipeline, env } from "@xenova/transformers";
 
 ort.env.wasm.numThreads = 1;
 ort.env.wasm.simd = true;
@@ -20,6 +21,7 @@ export class LLM {
   max_tokens = 9999;
   model_bytes = null;
   opt = null;
+  pipeline = undefined;
 
   constructor(document = undefined) {
     if (document) {
@@ -36,12 +38,15 @@ export class LLM {
     const local = options.local;
     const hasFP16 = provider === "wasm" ? false : options.hasFP16;
     this.profiler = options.profiler;
-
+    console.log("model", model);
     const model_path = local
       ? "models/" + model.path
       : "https://huggingface.co/" + model.path + "/resolve/main";
+
+    const isHuggingFace = model.path.includes("HuggingFaceTB");
     let model_file = model.file || "model";
     model_file = hasFP16 ? model_file + "_q4f16.onnx" : model_file + "_q4.onnx";
+    model_file = isHuggingFace ? "model.onnx" : model_file;
     const json_bytes = await fetchAndCache(
       model_path + "/config.json",
       callBackWait,
@@ -54,18 +59,31 @@ export class LLM {
       callBackWait,
       "Model file"
     );
-    const externaldata = model.externaldata
-      ? await fetchAndCache(
-          model_path + "/onnx/" + model_file + "_data",
-          callBackWait,
-          "Model external data"
-        )
-      : false;
+    let externaldata;
+    try {
+      externaldata = model.externaldata
+        ? await fetchAndCache(
+            model_path + "/onnx/" + model_file + "_data",
+            callBackWait,
+            "Model external data"
+          )
+        : false;
+    } catch (e) {
+      console.log(e);
+    }
     let modelSize = model_bytes.byteLength;
     if (externaldata) {
       modelSize += externaldata.byteLength;
     }
     console.log(`model size ${Math.round(modelSize / 1024 / 1024)} MB`);
+
+    if (isHuggingFace) {
+      console.log("model.path", model.path);
+      this.pipeline = await pipeline("text-generation", model.path, {
+        cache_dir: "onnx",
+      });
+      return;
+    }
 
     const opt = {
       executionProviders: [provider],
@@ -251,3 +269,10 @@ export class LLM {
     return this.output_tokens;
   }
 }
+
+// "@xenova/transformers": "^2.17.1",
+// "axios": "^1.7.3",
+// "lucide-react": "^0.414.0",
+// "marked": "^12.0.2",
+// "onnxruntime-common": "^1.18.0",
+// "onnxruntime-web": "^1.19.0-dev.20240509-69cfcba38a",

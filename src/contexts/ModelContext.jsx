@@ -8,28 +8,32 @@ import React, {
 import { v4 as uuidv4 } from "uuid";
 import { extractJsonString } from "../utils/messages";
 import { chatCompletionAPI } from "../utils/llm-api";
+import { chatCompletionReplicate } from "../utils/llm-replicate-api";
+
 const ModelContext = createContext();
 
 export const useModel = () => useContext(ModelContext);
-
+const defaultsSettings = {
+  disallowedDownloading: true,
+  apiUrlBaseLLM: "http://localhost:11434/api/chat",
+  modelApi: "llama3.1",
+  useAPI: false,
+  useReplicateAPI: false,
+  replicateModelPath: "meta/meta-llama-3.1-405b-instruct",
+};
 export const getUserSettings = () => {
   let userModelSettingsLocalStorage;
   let userModelSettingsLocalStorageRaw =
     localStorage.getItem("userModelSettings");
 
   if (!userModelSettingsLocalStorageRaw) {
-    userModelSettingsLocalStorage = {
-      disallowedDownloading: true,
-      apiUrlBaseLLM: "http://localhost:11434/api/chat",
-      modelApi: "llama3.1",
-      useAPI: false,
-    };
+    userModelSettingsLocalStorage = defaultsSettings;
   } else {
     userModelSettingsLocalStorage = JSON.parse(
       userModelSettingsLocalStorageRaw
     );
   }
-  return userModelSettingsLocalStorage;
+  return { ...defaultsSettings, ...userModelSettingsLocalStorage };
 };
 export const USER_SETTINGS = getUserSettings();
 
@@ -48,7 +52,16 @@ export const ModelProvider = ({ children }) => {
     USER_SETTINGS.apiUrlBaseLLM
   );
   const [modelApi, setApiModel] = useState(USER_SETTINGS.modelApi);
-  const [useAPI, setUseAPI] = useState(USER_SETTINGS.useAPI);
+  const [useAPI, setUseAPI] = useState(USER_SETTINGS.useAPI === true);
+  const [useReplicateAPI, setUseReplicateAPI] = useState(
+    USER_SETTINGS.useReplicateAPI === true
+  );
+  const [replicateApiToken, setReplicateApiToken] = useState(
+    USER_SETTINGS.replicateApiToken
+  );
+  const [replicateModelPath, setReplicateModelPath] = useState(
+    USER_SETTINGS.replicateModelPath
+  );
   const [displayModelSettings, setDisplayModelSettings] = useState(false);
   const chatCompletionJSON = async (
     query,
@@ -83,6 +96,15 @@ export const ModelProvider = ({ children }) => {
     callBackUpdate = undefined,
     timeoutMiliseconds = 150000
   ) => {
+    if (useReplicateAPI) {
+      return await chatCompletionReplicate(
+        query,
+        prompt,
+        replicateApiToken,
+        replicateModelPath,
+        callBackUpdate
+      );
+    }
     if (useAPI) {
       return await chatCompletionAPI(
         { query, prompt, baseUrl: apiUrlBaseLLM, model: modelApi },
@@ -241,6 +263,12 @@ export const ModelProvider = ({ children }) => {
         useAPI,
         setUseAPI,
         isGenerating,
+        useReplicateAPI,
+        setUseReplicateAPI,
+        replicateApiToken,
+        setReplicateApiToken,
+        replicateModelPath,
+        setReplicateModelPath,
       }}
     >
       {children}
