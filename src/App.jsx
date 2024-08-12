@@ -60,7 +60,6 @@ const App = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <AppBarMenu setActiveTab={setActiveTab} activeTab={activeTab} />
-      <ModelSettingsEditor />
       <div className="tab-content">
         <div className={activeTab === "kanban" ? "" : "hidden"}>
           <KanbanBoard />
@@ -80,6 +79,9 @@ const App = () => {
           />
           <div className="flex-grow"></div>
           <Footer />
+        </div>
+        <div className={activeTab === "model-settings" ? "" : "hidden"}>
+          <ModelSettingsEditor />
         </div>
         <div className={activeTab === "huggingface" ? "" : "hidden"}>
           <HuggingFaceComponent />

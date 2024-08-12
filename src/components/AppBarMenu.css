@@ -1,33 +1,24 @@
 /* AppBarMenu.css */
 .bg-green-600 {
-    background-color: #4caf50;
-  }
-  
-  .bg-green-700 {
-    background-color: #388e3c;
-  }
-  
-  .text-green-800 {
-    color: #2e7d32;
-  }
-  
-  .menu-open {
-    opacity: 1;
-    transform: translateY(0);
-    height: auto;
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, height 0.3s ease-in-out;
-  }
-  
-  .menu-closed {
-    opacity: 0;
-    transform: translateY(-20px);
-    height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, height 0.3s ease-in-out;
-  }
-  
-  .menu-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
+  background-color: #4caf50;
+}
+
+.bg-green-700 {
+  background-color: #388e3c;
+}
+
+.text-green-800 {
+  color: #2e7d32;
+}
+
+.menu-open {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}

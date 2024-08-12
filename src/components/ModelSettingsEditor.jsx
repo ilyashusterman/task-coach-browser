@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useModel, USER_SETTINGS } from "../contexts/ModelContext";
 import "./ModelSettingsEditor.css";
+import CorsDemoNotice from "./CorsDemoNotice";
 
 const ModelSettingsEditor = () => {
   const {
@@ -10,7 +11,6 @@ const ModelSettingsEditor = () => {
     setDisallowedDownloading,
     isModelLoaded,
     progress,
-    displayModelSettings,
     modelApi,
     setApiModel,
     useAPI,
@@ -25,7 +25,7 @@ const ModelSettingsEditor = () => {
   const [userModelSettings, setUserModelSettingsBase] = useState(USER_SETTINGS);
 
   const setUserModelSettings = ({ ...props }) => {
-    if (props.useAPI) {
+    if (props.useAPI || props.useReplicateAPI) {
       props.disallowedDownloading = true;
     }
     const newSettings = saveSettingsLocalStorage(props);
@@ -48,10 +48,9 @@ const ModelSettingsEditor = () => {
   }, []);
 
   const setSettingsContextProvider = (userModelSettingsLocalStorage) => {
-    if (!userModelSettingsLocalStorage.disallowedDownloading) {
-      setDisallowedDownloading(false);
-    }
-
+    setDisallowedDownloading(
+      userModelSettingsLocalStorage.disallowedDownloading
+    );
     if (
       userModelSettingsLocalStorage.apiUrlBaseLLM &&
       userModelSettingsLocalStorage.apiUrlBaseLLM !== ""
@@ -77,8 +76,6 @@ const ModelSettingsEditor = () => {
       setReplicateModelPath(userModelSettingsLocalStorage.replicateModelPath);
     }
   };
-
-  if (!displayModelSettings) return null;
 
   return (
     <div className="w-full max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
@@ -226,7 +223,7 @@ const ModelSettingsEditor = () => {
           </a>{" "}
           to run this demo. Copy it and paste above.
         </p>
-
+        <CorsDemoNotice />
         <div className="flex items-center justify-between">
           <label
             htmlFor="use-api"
