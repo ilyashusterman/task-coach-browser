@@ -237,12 +237,12 @@ export const ModelProvider = ({ children }) => {
   };
   const abortWorker = () => restartWorker;
   useEffect(() => {
-    if (useAPI && disallowedDownloading) {
+    if (useAPI || disallowedDownloading || useReplicateAPI) {
       return;
     }
     restartWorker(true);
   }, [disallowedDownloading]); // Empty dependency array ensures this runs only once
-
+  const canUseChatCompletion = useAPI || useReplicateAPI || isModelLoaded;
   return (
     <ModelContext.Provider
       value={{
@@ -269,6 +269,7 @@ export const ModelProvider = ({ children }) => {
         setReplicateApiToken,
         replicateModelPath,
         setReplicateModelPath,
+        canUseChatCompletion,
       }}
     >
       {children}

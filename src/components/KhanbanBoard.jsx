@@ -319,8 +319,12 @@ async function getTokenCount(text, model = "gpt-4") {
 }
 
 const KanbanBoard = () => {
-  const { chatCompletion, chatCompletionJSON, isModelLoaded, useAPI } =
-    useModel();
+  const {
+    chatCompletion,
+    chatCompletionJSON,
+    isModelLoaded,
+    canUseChatCompletion,
+  } = useModel();
   const [board, setBoardBase] = useState({
     id: "board-1",
     title: "My Kanban Board",
@@ -422,7 +426,7 @@ const KanbanBoard = () => {
   }, []);
 
   useEffect(() => {
-    if (isModelLoaded || useAPI) {
+    if (canUseChatCompletion) {
       chatCompletion("Hello", "You are a friendly assistant.", setGreeting);
     } else {
       setGreeting("Hello lets create tasks");
