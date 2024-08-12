@@ -2,7 +2,7 @@ import axios from "axios";
 
 const proxyPOSTUrls = [
   "https://cors-anywhere.herokuapp.com/",
-  "https://thingproxy.freeboard.io/fetch/",
+  //   "https://thingproxy.freeboard.io/fetch/",
 ];
 
 const proxyGetUrls = [
