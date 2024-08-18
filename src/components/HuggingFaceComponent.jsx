@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { pipeline, env } from "@xenova/transformers";
+import {
+  pipeline,
+  AutoTokenizer,
+  AutoModelForCausalLM,
+  env,
+  // getModelFile,
+} from "@xenova/transformers";
+import { useModel } from "../contexts/ModelContext";
+import { getModelFile } from "@xenova/transformers/src/utils/hub";
+import { InferenceSession, Tensor } from "onnxruntime-web/webgpu";
 
 // Set environment variables for local model loading
 // env.allowLocalModels = false;
@@ -10,24 +19,41 @@ import { pipeline, env } from "@xenova/transformers";
 // const MODEL_NAME = "microsoft/Phi-3-mini-4k-instruct-onnx-web";
 
 // const MODEL_NAME = "HuggingFaceTB/SmolLM-135M-Instruct";
-// const MODEL_NAME = "HuggingFaceTB/SmolLM-360M-Instruct";
+const MODEL_NAME = "HuggingFaceTB/smollm-360M-instruct-add-basics";
 
 function HuggingFaceComponent() {
+  const { huggingFaceModel: modelPath, setHuggingFaceModel: setModelPath } =
+    useModel();
   const [model, setModel] = useState(null);
   const [input, setInput] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
-  const [modelPath, setModelPath] = useState("Xenova/Phi-3-mini-4k-instruct");
+
   const loadModel = async () => {
     env.allowLocalModels = false;
     setLoading(true);
     try {
-      const pipe = await pipeline("text-generation", modelPath, {
-        model_file_name: "model",
-        // quantized: true,
-        progress_callback: console.log,
+      // const pipe = await pipeline("text-generation", modelPath, {
+      //   // model_file_name: "model",
+      //   // quantized: true,
+      //   progress_callback: console.log,
+      // });
+      const buffer = await getModelFile(modelPath, "onnx/model.onnx", true, {});
+      debugger;
+      const session = await InferenceSession.create(buffer, {
+        executionProviders: ["wasm"],
       });
-      setModel(pipe);
+      debugger;
+      // const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
+      // debugger;
+      // const outputTensors = await this.session.run(inputs, options);
+      const model = await AutoModelForCausalLM.from_pretrained(modelPath, {
+        progress_callback: console.log,
+        model_file_name: "model",
+        quantized: false,
+      });
+      debugger;
+      setModel(model);
     } catch (error) {
       console.error("Error loading model:", error);
     }

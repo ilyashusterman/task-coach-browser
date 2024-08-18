@@ -1,6 +1,5 @@
 import * as ort from "onnxruntime-web/webgpu";
 import { fetchAndCache } from "./utils";
-import { pipeline, env } from "@xenova/transformers";
 
 ort.env.wasm.numThreads = 1;
 ort.env.wasm.simd = true;
@@ -76,15 +75,6 @@ export class LLM {
       modelSize += externaldata.byteLength;
     }
     console.log(`model size ${Math.round(modelSize / 1024 / 1024)} MB`);
-
-    if (isHuggingFace) {
-      console.log("model.path", model.path);
-      this.pipeline = await pipeline("text-generation", model.path, {
-        cache_dir: "onnx",
-      });
-      return;
-    }
-
     const opt = {
       executionProviders: [provider],
       preferredOutputLocation: {},

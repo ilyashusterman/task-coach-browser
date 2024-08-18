@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { X } from "lucide-react";
 
-const defaultColor = "#22c55e";
+const defaultColor = "#007AFF"; // Apple's blue
 
 const TaskComponent = ({
   task,
@@ -17,12 +17,14 @@ const TaskComponent = ({
   const [isHovered, setIsHovered] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState(null);
   const fileInputRef = useRef(null);
+
   const getColor = () => {
     if (task.color) {
       return task.color.color;
     }
     return defaultColor;
   };
+
   const handleFileUpload = (e) => {
     const files = e.target.files;
     if (files) {
@@ -92,11 +94,16 @@ const TaskComponent = ({
 
   return (
     <div
-      className={`bg-white p-3 mb-2 rounded shadow-sm transition-all duration-300 cursor-move
+      className={`bg-white p-4 mb-3 rounded-xl shadow-sm transition-all duration-300 cursor-move
         ${isDragging ? "opacity-50" : ""}
-        ${isHovered ? "shadow-md scale-105" : ""}
+        ${isHovered ? "shadow-md" : ""}
         ${columnId === "blocked" ? "border-l-4 border-red-500" : ""}
       `}
+      style={{
+        backdropFilter: "blur(10px)",
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        border: "1px solid #E5E5EA", // Light gray border for visibility
+      }}
       draggable
       onDragStart={(e) => handleDragStart(task, e)}
       onDragOver={handleDragOver}
@@ -105,7 +112,7 @@ const TaskComponent = ({
       onMouseLeave={() => setIsHovered(false)}
       onPaste={handlePaste}
     >
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-3">
         <input
           value={task.title}
           onChange={(e) =>
@@ -116,14 +123,14 @@ const TaskComponent = ({
           style={{
             color: getColor(),
           }}
-          className="font-semibold text-green-700 w-full mr-2 bg-transparent border-b border-transparent focus:border-green-300 focus:outline-none transition-all duration-300"
+          className="font-semibold text-lg w-full mr-2 bg-transparent border-b border-transparent focus:border-blue-300 focus:outline-none transition-all duration-300"
         />
-        <span className="text-xs text-green-600">{task.estimatedTime}</span>
+        <span className="text-xs text-gray-500">{task.estimatedTime}</span>
       </div>
-      <div className="text-xs text-gray-500 mb-2">
+      <div className="text-xs text-gray-500 mb-3">
         <strong>Main Task:</strong> {task.parentTitle || task.title}
       </div>
-      <div className="text-sm text-green-600 mb-2">
+      <div className="text-sm text-gray-700 mb-3">
         Priority:
         <select
           value={task.priority}
@@ -132,32 +139,32 @@ const TaskComponent = ({
               priority: e.target.value,
             })
           }
-          className="ml-2 bg-green-50 rounded border-none focus:ring-2 focus:ring-green-300 transition-all duration-300"
+          className="ml-2 bg-gray-100 rounded-md border-none focus:ring-2 focus:ring-blue-300 transition-all duration-300"
         >
           <option>Low</option>
           <option>Medium</option>
           <option>High</option>
         </select>
       </div>
-      <div className="mb-2">
+      <div className="mb-3">
         <textarea
           value={task.description}
           onChange={(e) =>
             updateTask(columnId, task.id, { description: e.target.value })
           }
           placeholder="Task description"
-          className="w-full p-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-green-300 transition-all duration-300"
+          className="w-full p-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-300"
           rows="3"
         ></textarea>
       </div>
 
       {/* Attachments Preview */}
       {task.attachments && task.attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           {task.attachments.map((attachment, index) => (
             <div
               key={index}
-              className="relative group w-16 h-16 overflow-hidden rounded shadow-sm"
+              className="relative group w-16 h-16 overflow-hidden rounded-lg shadow-sm"
             >
               {attachment.type && attachment.type.startsWith("image/") ? (
                 <img
@@ -168,7 +175,7 @@ const TaskComponent = ({
                 />
               ) : (
                 <div
-                  className="w-full h-full flex items-center justify-center bg-gray-200 cursor-pointer"
+                  className="w-full h-full flex items-center justify-center bg-gray-100 cursor-pointer"
                   onClick={() => openAttachmentPreview(attachment)}
                 >
                   <span className="text-xs text-center break-words p-1">
@@ -178,7 +185,7 @@ const TaskComponent = ({
               )}
               <button
                 onClick={() => removeAttachment(index)}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               >
                 <X size={12} />
               </button>
@@ -193,7 +200,7 @@ const TaskComponent = ({
         onDragOver={handleDragOverLocal}
         onDrop={handleDropLocal}
         onClick={() => fileInputRef.current.click()}
-        className="border-2 border-dashed border-gray-300 p-4 rounded-lg mb-2 transition-all duration-300 hover:border-green-500 hover:bg-green-50 cursor-pointer"
+        className="border-2 border-dashed border-gray-200 p-4 rounded-lg mb-3 transition-all duration-300 hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
       >
         <input
           type="file"
@@ -202,37 +209,55 @@ const TaskComponent = ({
           className="hidden"
           multiple
         />
-        <p className="text-gray-500 text-sm">Attachments</p>
+        <p className="text-gray-500 text-sm">Add Attachments</p>
       </div>
 
-      <button
-        onClick={() => deleteTask(columnId, task.id)}
-        className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs transition-all duration-300 mt-2"
-      >
-        Delete Task
-      </button>
+      <div className="flex justify-between items-center">
+        <button
+          onClick={() => deleteTask(columnId, task.id)}
+          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-xs transition-all duration-300"
+        >
+          Delete Task
+        </button>
+
+        {columnId === "blocked" ? (
+          <div className="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full">
+            BLOCKED
+          </div>
+        ) : (
+          <div className="w-1/2 bg-gray-200 rounded-full h-2">
+            <div
+              className="h-2 rounded-full"
+              style={{
+                backgroundColor: getColor(),
+                width: `${columnPrecent * 100}%`,
+              }}
+            ></div>
+          </div>
+        )}
+      </div>
 
       {previewAttachment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg max-w-3xl max-h-[90vh] overflow-auto">
+          <div className="bg-white p-6 rounded-2xl max-w-3xl max-h-[90vh] overflow-auto">
             {previewAttachment.type &&
             previewAttachment.type.startsWith("image/") ? (
               <img
                 src={previewAttachment.data}
                 alt={previewAttachment.name}
-                className="max-w-full h-auto"
+                className="max-w-full h-auto rounded-lg"
               />
             ) : (
-              <div className="bg-gray-100 p-4 rounded">
+              <div className="bg-gray-100 p-4 rounded-lg">
                 <h3 className="font-bold mb-2">{previewAttachment.name}</h3>
-                <p className="text-sm">
+                <p className="text-sm text-gray-600">
                   This file cannot be previewed. You can download it to view its
                   contents.
                 </p>
                 <a
                   href={previewAttachment.data}
                   download={previewAttachment.name}
-                  className="mt-2 inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition-all duration-300"
+                  className="mt-3 inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm transition-all duration-300"
                 >
                   Download
                 </a>
@@ -240,29 +265,11 @@ const TaskComponent = ({
             )}
             <button
               onClick={closeAttachmentPreview}
-              className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-all duration-300"
+              className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-full text-sm transition-all duration-300"
             >
               Close Preview
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Progress Bar */}
-      {/* Progress Bar or Blocked Label */}
-      {columnId === "blocked" ? (
-        <div className="mt-2 bg-red-100 text-red-800 text-xs font-semibold p-2 rounded">
-          BLOCKED
-        </div>
-      ) : (
-        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-          <div
-            className="h-2 rounded-full"
-            style={{
-              backgroundColor: getColor(),
-              width: `${columnPrecent * 100}%`,
-            }}
-          ></div>
         </div>
       )}
     </div>

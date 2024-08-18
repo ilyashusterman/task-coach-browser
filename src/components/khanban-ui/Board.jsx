@@ -3,8 +3,6 @@ import TaskComponent from "./TaskComponent";
 
 const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
   const [columns, setColumns] = useState(initialColumns);
-  // const [tasks, setTasks] = useState(initialTasks);
-  // const [tasks, setTasks] = useState(initialTasks);
   const [draggedTask, setDraggedTask] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -13,7 +11,6 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
   const getTasks = (columnId) => {
     const tasksState =
       tasks.find((taskColumn) => taskColumn.id === columnId)?.tasks || [];
-
     return tasksState.map((task) => ({ ...task, column: columnId }));
   };
 
@@ -109,15 +106,14 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
       )
     );
   }, []);
+
   return (
-    <div className="flex space-x-4 overflow-x-auto pb-4">
+    <div className="flex space-x-6 overflow-x-auto pb-8">
       {columns.map((column) => (
         <div
           key={column.id}
-          className={`bg-green-100 p-4 rounded-lg shadow-md min-w-[300px] transition-all duration-300 ${
-            dragOverColumn === column.id
-              ? "ring-2 ring-green-400 shadow-lg"
-              : ""
+          className={`bg-white p-6 rounded-2xl shadow-md min-w-[320px] transition-all duration-300 ${
+            dragOverColumn === column.id ? "ring-2 ring-blue-400 shadow-lg" : ""
           }`}
           onDragEnter={(e) => handleDragEnter(e, column.id)}
           onDragLeave={handleDragLeave}
@@ -135,11 +131,13 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
             )
           }
         >
-          <h2 className="font-bold mb-4 text-green-800">{column.title}</h2>
+          <h2 className="font-semibold mb-6 text-gray-800 text-lg">
+            {column.title}
+          </h2>
           {getTasks(column.id).map((task, index) => (
             <React.Fragment key={task.id}>
               {dragOverColumn === column.id && dragOverIndex === index && (
-                <div className="h-2 bg-green-300 rounded my-2 transition-all duration-300" />
+                <div className="h-1 bg-blue-200 rounded my-2 transition-all duration-300" />
               )}
               <TaskComponent
                 task={task}
@@ -165,7 +163,7 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
           {dragOverColumn === column.id &&
             dragOverIndex ===
               tasks.find((t) => t.id === column.id)?.tasks.length && (
-              <div className="h-2 bg-green-300 rounded my-2 transition-all duration-300" />
+              <div className="h-1 bg-blue-200 rounded my-2 transition-all duration-300" />
             )}
         </div>
       ))}

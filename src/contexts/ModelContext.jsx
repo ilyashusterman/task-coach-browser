@@ -20,6 +20,7 @@ const defaultsSettings = {
   useAPI: false,
   useReplicateAPI: false,
   replicateModelPath: "meta/meta-llama-3.1-405b-instruct",
+  huggingFaceModel: "HuggingFaceTB/SmolLM-360M-Instruct",
 };
 export const getUserSettings = () => {
   let userModelSettingsLocalStorage;
@@ -35,7 +36,18 @@ export const getUserSettings = () => {
   }
   return { ...defaultsSettings, ...userModelSettingsLocalStorage };
 };
+
 export const USER_SETTINGS = getUserSettings();
+
+const saveUserSettings = ({ ...props }) => {
+  const newSettings = {
+    modified: new Date().toISOString(),
+    ...getUserSettings(),
+    ...props,
+  };
+  localStorage.setItem("userModelSettings", JSON.stringify(newSettings));
+  return newSettings;
+};
 
 export const ModelProvider = ({ children }) => {
   const worker = useRef(null);
@@ -56,6 +68,13 @@ export const ModelProvider = ({ children }) => {
   const [useReplicateAPI, setUseReplicateAPI] = useState(
     USER_SETTINGS.useReplicateAPI === true
   );
+  const [huggingFaceModel, setHuggingFaceModelBase] = useState(
+    USER_SETTINGS.huggingFaceModel
+  );
+  const setHuggingFaceModel = (model) => {
+    setHuggingFaceModelBase(model);
+    saveUserSettings({ huggingFaceModel: model });
+  };
   const [replicateApiToken, setReplicateApiToken] = useState(
     USER_SETTINGS.replicateApiToken
   );
@@ -270,6 +289,8 @@ export const ModelProvider = ({ children }) => {
         replicateModelPath,
         setReplicateModelPath,
         canUseChatCompletion,
+        huggingFaceModel,
+        setHuggingFaceModel,
       }}
     >
       {children}
