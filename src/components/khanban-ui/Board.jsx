@@ -108,11 +108,11 @@ const Board = ({ columns: initialColumns, tasks, setTasks, ...props }) => {
   }, []);
 
   return (
-    <div className="flex space-x-6 overflow-x-auto pb-8">
+    <div className="flex flex-wrap space-x-6 overflow-x-auto pb-8 lg:flex-nowrap">
       {columns.map((column) => (
         <div
           key={column.id}
-          className={`bg-white p-6 rounded-2xl shadow-md min-w-[320px] transition-all duration-300 ${
+          className={`bg-white p-6 rounded-2xl shadow-md min-w-[280px] md:min-w-[320px] flex-shrink-0 transition-all duration-300 ${
             dragOverColumn === column.id ? "ring-2 ring-blue-400 shadow-lg" : ""
           }`}
           onDragEnter={(e) => handleDragEnter(e, column.id)}

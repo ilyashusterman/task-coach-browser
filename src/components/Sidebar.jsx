@@ -4,7 +4,7 @@ import CoachGoalsLogo from "./CoachGoalsLogo";
 import "./Sidebar.css";
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(window.innerWidth >= 768);
 
   useEffect(() => {
     const handleResize = () => {

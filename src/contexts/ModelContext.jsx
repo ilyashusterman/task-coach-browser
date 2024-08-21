@@ -56,7 +56,14 @@ export const ModelProvider = ({ children }) => {
     text: "Starting progress",
     progress: 0,
   });
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGeneratingBase] = useState(false);
+  const setIsGenerating = (value) => {
+    localStorage.setItem("isGenerating", value);
+    return setIsGeneratingBase(value);
+  };
+  const getIsGenerating = () => {
+    return localStorage.getItem("isGenerating") === "true";
+  };
   const [disallowedDownloading, setDisallowedDownloading] = useState(
     USER_SETTINGS.disallowedDownloading
   );
@@ -82,6 +89,7 @@ export const ModelProvider = ({ children }) => {
     USER_SETTINGS.replicateModelPath
   );
   const [displayModelSettings, setDisplayModelSettings] = useState(false);
+
   const chatCompletionJSON = async (
     query,
     sysPrompt,
@@ -135,7 +143,10 @@ export const ModelProvider = ({ children }) => {
     if (!isModelLoaded) {
       return "No model loaded";
     }
-
+    // await 1  second each time till getIsGenerating() gives false
+    while (getIsGenerating()) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
     setIsGenerating(true);
     const uuidKey = uuidv4();
     worker.current.postMessage({
@@ -187,7 +198,7 @@ export const ModelProvider = ({ children }) => {
     });
   };
   const restartWorker = async (isInitial = true) => {
-    if (worker.current) {
+    if (worker !== null && worker !== undefined && worker.current) {
       await new Promise((resolve, reject) => {
         const uuidKey = uuidv4();
         worker.current.postMessage({
@@ -209,6 +220,8 @@ export const ModelProvider = ({ children }) => {
           clearTimeout(timeout);
           const { status, value } = event.data;
           if (status === "terminated") {
+            console.log("status", status);
+            console.log("value", value);
             resolve(value);
           }
         };
@@ -231,7 +244,7 @@ export const ModelProvider = ({ children }) => {
         event: "initializingModel",
         key: uuidKey,
       });
-      console.log("initializingModel ", uuidKey);
+      console.log("initializingModel new", uuidKey);
       // wait for 1 seconds the worker to finish initializing the model.
       await new Promise((resolve, reject) => {
         worker.current.onmessage = (event) => {

@@ -11,10 +11,9 @@ import {
 import { useModel } from "./contexts/ModelContext";
 import SystemPromptEditor from "./components/SystemPromptEditor";
 import KanbanBoard from "./components/KhanbanBoard";
-import AppBarMenu from "./components/AppBarMenu";
 import Footer from "./components/Footer";
 import HuggingFaceComponent from "./components/HuggingFaceComponent";
-import Sidebar from "./components/SideBar";
+import Sidebar from "./components/Sidebar";
 
 const App = () => {
   const [chatHistory, setChatHistory] = useState([]);
@@ -59,29 +58,31 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("kanban");
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar setActiveTab={setActiveTab} activeTab={activeTab} />
-      <div className="flex-1 p-8">
-        {activeTab === "kanban" && <KanbanBoard />}
-        {activeTab === "debugger" && (
-          <>
-            <SystemPromptEditor
-              systemPrompt={systemPrompt}
-              setSystemPrompt={setSystemPrompt}
-            />
-            <ChatBot
-              isModelLoaded={isModelLoaded}
-              chatHistory={chatHistory}
-              setChatHistory={setChatHistory}
-              onSubmit={chatCompletion}
-              isGenerating={isGenerating}
-              abortWorker={abortWorker}
-            />
-            <Footer />
-          </>
-        )}
-        {activeTab === "model-settings" && <ModelSettingsEditor />}
-        {activeTab === "huggingface" && <HuggingFaceComponent />}
+    <div className="container-fluid">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="main-content">
+        <div>
+          {activeTab === "kanban" && <KanbanBoard />}
+          {activeTab === "debugger" && (
+            <>
+              <SystemPromptEditor
+                systemPrompt={systemPrompt}
+                setSystemPrompt={setSystemPrompt}
+              />
+              <ChatBot
+                isModelLoaded={isModelLoaded}
+                chatHistory={chatHistory}
+                setChatHistory={setChatHistory}
+                onSubmit={chatCompletion}
+                isGenerating={isGenerating}
+                abortWorker={abortWorker}
+              />
+              <Footer />
+            </>
+          )}
+          {activeTab === "model-settings" && <ModelSettingsEditor />}
+          {activeTab === "huggingface" && <HuggingFaceComponent />}
+        </div>
       </div>
     </div>
   );

@@ -26,12 +26,8 @@ import {
 const MAX_TOKENS = 15;
 
 const KanbanBoard = () => {
-  const {
-    chatCompletion,
-    chatCompletionJSON,
-    isModelLoaded,
-    canUseChatCompletion,
-  } = useModel();
+  const { chatCompletion, chatCompletionJSON, canUseChatCompletion } =
+    useModel();
   const [board, setBoardBase] = useState({
     id: "board-1",
     title: "My Inspired Kanban",
@@ -101,7 +97,7 @@ const KanbanBoard = () => {
     } else {
       setGreeting("Hello, let's create tasks");
     }
-  }, [isModelLoaded]);
+  }, [canUseChatCompletion]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
