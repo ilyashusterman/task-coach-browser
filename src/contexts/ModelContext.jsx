@@ -3,17 +3,20 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useCallback,
   useRef,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { extractJsonString } from "../utils/messages";
 import { chatCompletionAPI } from "../utils/llm-api";
 import { chatCompletionReplicate } from "../utils/llm-replicate-api";
+import WorkerInstance from "./WorkerInstance";
 
 const ModelContext = createContext();
 
 export const useModel = () => useContext(ModelContext);
-const defaultsSettings = {
+
+const defaultSettings = {
   disallowedDownloading: true,
   apiUrlBaseLLM: "http://localhost:11434/api/chat",
   modelApi: "llama3.1",
@@ -22,291 +25,234 @@ const defaultsSettings = {
   replicateModelPath: "meta/meta-llama-3.1-405b-instruct",
   huggingFaceModel: "HuggingFaceTB/SmolLM-360M-Instruct",
 };
-export const getUserSettings = () => {
-  let userModelSettingsLocalStorage;
-  let userModelSettingsLocalStorageRaw =
-    localStorage.getItem("userModelSettings");
-
-  if (!userModelSettingsLocalStorageRaw) {
-    userModelSettingsLocalStorage = defaultsSettings;
-  } else {
-    userModelSettingsLocalStorage = JSON.parse(
-      userModelSettingsLocalStorageRaw
-    );
-  }
-  return { ...defaultsSettings, ...userModelSettingsLocalStorage };
+export const USER_SETTINGS = defaultSettings;
+const getUserSettings = () => {
+  const storedSettings = localStorage.getItem("userModelSettings");
+  return storedSettings
+    ? { ...defaultSettings, ...JSON.parse(storedSettings) }
+    : defaultSettings;
 };
 
-export const USER_SETTINGS = getUserSettings();
-
-const saveUserSettings = ({ ...props }) => {
-  const newSettings = {
-    modified: new Date().toISOString(),
+const saveUserSettings = (newSettings) => {
+  const updatedSettings = {
     ...getUserSettings(),
-    ...props,
+    ...newSettings,
+    modified: new Date().toISOString(),
   };
-  localStorage.setItem("userModelSettings", JSON.stringify(newSettings));
-  return newSettings;
+  localStorage.setItem("userModelSettings", JSON.stringify(updatedSettings));
+  return updatedSettings;
 };
 
 export const ModelProvider = ({ children }) => {
-  const worker = useRef(null);
+  const [workerInstance, setWorkerInstance] = useState(null);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [progress, setProgress] = useState({
     text: "Starting progress",
     progress: 0,
   });
-  const [isGenerating, setIsGeneratingBase] = useState(false);
-  const setIsGenerating = (value) => {
-    localStorage.setItem("isGenerating", value);
-    return setIsGeneratingBase(value);
-  };
-  const getIsGenerating = () => {
-    return localStorage.getItem("isGenerating") === "true";
-  };
-  const [disallowedDownloading, setDisallowedDownloading] = useState(
-    USER_SETTINGS.disallowedDownloading
-  );
-  const [apiUrlBaseLLM, setApiUrlBaseLLM] = useState(
-    USER_SETTINGS.apiUrlBaseLLM
-  );
-  const [modelApi, setApiModel] = useState(USER_SETTINGS.modelApi);
-  const [useAPI, setUseAPI] = useState(USER_SETTINGS.useAPI === true);
-  const [useReplicateAPI, setUseReplicateAPI] = useState(
-    USER_SETTINGS.useReplicateAPI === true
-  );
-  const [huggingFaceModel, setHuggingFaceModelBase] = useState(
-    USER_SETTINGS.huggingFaceModel
-  );
-  const setHuggingFaceModel = (model) => {
-    setHuggingFaceModelBase(model);
-    saveUserSettings({ huggingFaceModel: model });
-  };
-  const [replicateApiToken, setReplicateApiToken] = useState(
-    USER_SETTINGS.replicateApiToken
-  );
-  const [replicateModelPath, setReplicateModelPath] = useState(
-    USER_SETTINGS.replicateModelPath
-  );
-  const [displayModelSettings, setDisplayModelSettings] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [settings, setSettings] = useState(getUserSettings());
+  const chatQueue = useRef([]);
+  const isProcessingQueue = useRef(false);
+  const initializationAttempted = useRef(false);
 
-  const chatCompletionJSON = async (
-    query,
-    sysPrompt,
-    retries = 3,
-    callBackUpdate = undefined,
-    timeoutMiliseconds = 150000
-  ) => {
-    let attempt = 0;
-    while (attempt < retries) {
-      try {
-        const response = await chatCompletion(
-          query,
-          sysPrompt,
-          callBackUpdate,
-          timeoutMiliseconds
-        );
-        return extractJsonString(response);
-      } catch (error) {
-        console.error(`Attempt ${attempt + 1} failed:`, error);
-        attempt++;
-        if (attempt >= retries) {
-          throw new Error(`Failed after ${retries} attempts`);
-        }
-      }
-    }
-  };
-
-  const chatCompletion = async (
-    query,
-    prompt,
-    callBackUpdate = undefined,
-    timeoutMiliseconds = 150000
-  ) => {
-    if (useReplicateAPI) {
-      return await chatCompletionReplicate(
-        query,
-        prompt,
-        replicateApiToken,
-        replicateModelPath,
-        callBackUpdate
-      );
-    }
-    if (useAPI) {
-      return await chatCompletionAPI(
-        { query, prompt, baseUrl: apiUrlBaseLLM, model: modelApi },
-        callBackUpdate,
-        timeoutMiliseconds
-      );
-    }
-
-    if (!isModelLoaded) {
-      return "No model loaded";
-    }
-    // await 1  second each time till getIsGenerating() gives false
-    while (getIsGenerating()) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    setIsGenerating(true);
-    const uuidKey = uuidv4();
-    worker.current.postMessage({
-      query,
-      systemPrompt: prompt,
-      stream: true,
-      event: "chatCompletion",
-      key: uuidKey,
+  const updateSetting = useCallback((key, value) => {
+    setSettings((prev) => {
+      const newSettings = { ...prev, [key]: value };
+      saveUserSettings(newSettings);
+      return newSettings;
     });
+  }, []);
 
-    return await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(
-          new Error(
-            `No message received within ${timeoutMiliseconds / 1000} seconds`
-          )
-        );
-      }, timeoutMiliseconds);
-
-      worker.current.onmessage = (event) => {
-        if (event.data.key === undefined && event.data?.key !== uuidKey) {
-          return;
-        }
-        clearTimeout(timeout);
-        const { status, text } = event.data;
-        if (status === "final") {
-          if (callBackUpdate !== undefined) {
-            callBackUpdate(text);
-          }
-          restartWorker(false).then(() => {
-            new Promise((resolveWaitGenerating) => {
-              const result = setIsGenerating(false);
-              resolveWaitGenerating(result);
-            }).then(() => {
-              new Promise((resolveWait) => setTimeout(resolveWait, 2000)).then(
-                () => {
-                  resolve(text);
-                }
-              );
-            });
-          });
-        }
-        if (status === "stream") {
-          if (callBackUpdate !== undefined) {
-            callBackUpdate(text);
-          }
-        }
-      };
-    });
-  };
-  const restartWorker = async (isInitial = true) => {
-    if (worker !== null && worker !== undefined && worker.current) {
-      await new Promise((resolve, reject) => {
-        const uuidKey = uuidv4();
-        worker.current.postMessage({
-          event: "terminateModel",
-          key: uuidKey,
-        });
-        const timeout = setTimeout(() => {
-          reject(
-            new Error(
-              `terminateWorker: No message received within ${5000} seconds`
-            )
-          );
-        }, 5000);
-
-        worker.current.onmessage = (event) => {
-          if (event.data.key !== uuidKey) {
-            return;
-          }
-          clearTimeout(timeout);
-          const { status, value } = event.data;
-          if (status === "terminated") {
-            console.log("status", status);
-            console.log("value", value);
-            resolve(value);
-          }
-        };
-      });
-
-      await worker.current.terminate();
-      worker.current = null;
-    }
-    return await initWorker(isInitial);
-  };
-  const initWorker = async (isInitial = true) => {
-    if (!worker.current) {
-      const uuidKey = uuidv4();
-      // Create the worker if it does not yet exist.
-      worker.current = new Worker(new URL("../worker.js", import.meta.url), {
-        type: "module",
-        name: "ChatCompletion",
-      });
-      worker.current.postMessage({
-        event: "initializingModel",
-        key: uuidKey,
-      });
-      console.log("initializingModel new", uuidKey);
-      // wait for 1 seconds the worker to finish initializing the model.
-      await new Promise((resolve, reject) => {
-        worker.current.onmessage = (event) => {
-          if (event.data.key === undefined && event.data?.key !== uuidKey) {
-            return;
-          }
-          console.log("Got initializingModel ", event.data?.key);
-          const { status, value } = event.data;
-          if (status === "progress") {
-            if (isInitial) {
-              setProgress(value);
-              resolve(true);
-            }
-          }
-          if (status === "isModelLoaded") {
-            setIsModelLoaded(value);
-            resolve(true);
-          }
-        };
-      });
-    }
-  };
-  const abortWorker = () => restartWorker;
-  useEffect(() => {
-    if (useAPI || disallowedDownloading || useReplicateAPI) {
+  const initializeWorker = useCallback(async () => {
+    if (initializationAttempted.current) {
       return;
     }
-    restartWorker(true);
-  }, [disallowedDownloading]); // Empty dependency array ensures this runs only once
-  const canUseChatCompletion = useAPI || useReplicateAPI || isModelLoaded;
+
+    initializationAttempted.current = true;
+
+    if (
+      settings.useAPI ||
+      settings.disallowedDownloading ||
+      settings.useReplicateAPI
+    ) {
+      return;
+    }
+
+    try {
+      const instance = new WorkerInstance();
+      await instance.initialize(
+        (value) => setProgress(value),
+        (value) => setIsModelLoaded(value)
+      );
+      setWorkerInstance(instance);
+    } catch (error) {
+      console.error("Failed to initialize worker:", error);
+      initializationAttempted.current = false; // Allow retry on error
+    }
+  }, [
+    settings.useAPI,
+    settings.disallowedDownloading,
+    settings.useReplicateAPI,
+  ]);
+
+  useEffect(() => {
+    initializeWorker();
+  }, [initializeWorker]);
+
+  const processQueue = useCallback(async () => {
+    if (isProcessingQueue.current) {
+      return;
+    }
+
+    isProcessingQueue.current = true;
+    setIsGenerating(true);
+
+    while (chatQueue.current.length > 0) {
+      const {
+        query,
+        prompt,
+        resolve,
+        reject,
+        callBackUpdate,
+        timeoutMiliseconds,
+      } = chatQueue.current[0];
+
+      try {
+        let result;
+        if (settings.useReplicateAPI) {
+          result = await chatCompletionReplicate(
+            query,
+            prompt,
+            settings.replicateApiToken,
+            settings.replicateModelPath,
+            callBackUpdate
+          );
+        } else if (settings.useAPI) {
+          result = await chatCompletionAPI(
+            {
+              query,
+              prompt,
+              baseUrl: settings.apiUrlBaseLLM,
+              model: settings.modelApi,
+            },
+            callBackUpdate,
+            timeoutMiliseconds
+          );
+        } else if (isModelLoaded && workerInstance) {
+          const response = await workerInstance.chatCompletion(
+            query,
+            prompt,
+            true,
+            uuidv4()
+          );
+          result = response.text;
+        } else {
+          throw new Error("No model loaded");
+        }
+
+        if (callBackUpdate) callBackUpdate(result);
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      } finally {
+        chatQueue.current.shift();
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    setIsGenerating(false);
+    isProcessingQueue.current = false;
+  }, [settings, isModelLoaded, workerInstance]);
+
+  const chatCompletion = useCallback(
+    async (
+      query,
+      prompt,
+      callBackUpdate = undefined,
+      timeoutMiliseconds = 150000
+    ) => {
+      return new Promise((resolve, reject) => {
+        chatQueue.current.push({
+          query,
+          prompt,
+          resolve,
+          reject,
+          callBackUpdate,
+          timeoutMiliseconds,
+        });
+        processQueue();
+      });
+    },
+    [processQueue]
+  );
+
+  const chatCompletionJSON = useCallback(
+    async (
+      query,
+      sysPrompt,
+      retries = 3,
+      callBackUpdate = undefined,
+      timeoutMiliseconds = 150000
+    ) => {
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          const response = await chatCompletion(
+            query,
+            sysPrompt,
+            callBackUpdate,
+            timeoutMiliseconds
+          );
+          return extractJsonString(response);
+        } catch (error) {
+          console.error(`Attempt ${attempt + 1} failed:`, error);
+          if (attempt === retries - 1)
+            throw new Error(`Failed after ${retries} attempts`);
+        }
+      }
+    },
+    [chatCompletion]
+  );
+
+  const abortWorker = useCallback(async () => {
+    if (workerInstance) {
+      await workerInstance.terminateModel();
+      setWorkerInstance(null);
+      initializationAttempted.current = false;
+      await initializeWorker();
+    }
+  }, [workerInstance, initializeWorker]);
+
+  const contextValue = {
+    isModelLoaded,
+    progress,
+    chatCompletionJSON,
+    chatCompletion,
+    abortWorker,
+    isGenerating,
+    canUseChatCompletion:
+      settings.useAPI || settings.useReplicateAPI || isModelLoaded,
+    ...settings,
+    setDisallowedDownloading: (value) =>
+      updateSetting("disallowedDownloading", value),
+    setApiUrlBaseLLM: (value) => updateSetting("apiUrlBaseLLM", value),
+    setDisplayModelSettings: (value) =>
+      updateSetting("displayModelSettings", value),
+    setApiModel: (value) => updateSetting("modelApi", value),
+    setUseAPI: (value) => updateSetting("useAPI", value),
+    setUseReplicateAPI: (value) => updateSetting("useReplicateAPI", value),
+    setReplicateApiToken: (value) => updateSetting("replicateApiToken", value),
+    setReplicateModelPath: (value) =>
+      updateSetting("replicateModelPath", value),
+    setHuggingFaceModel: (value) => updateSetting("huggingFaceModel", value),
+  };
+
   return (
-    <ModelContext.Provider
-      value={{
-        worker,
-        isModelLoaded,
-        progress,
-        chatCompletionJSON,
-        chatCompletion,
-        abortWorker,
-        disallowedDownloading,
-        setDisallowedDownloading,
-        apiUrlBaseLLM,
-        setApiUrlBaseLLM,
-        displayModelSettings,
-        setDisplayModelSettings,
-        modelApi,
-        setApiModel,
-        useAPI,
-        setUseAPI,
-        isGenerating,
-        useReplicateAPI,
-        setUseReplicateAPI,
-        replicateApiToken,
-        setReplicateApiToken,
-        replicateModelPath,
-        setReplicateModelPath,
-        canUseChatCompletion,
-        huggingFaceModel,
-        setHuggingFaceModel,
-      }}
-    >
+    <ModelContext.Provider value={contextValue}>
       {children}
     </ModelContext.Provider>
   );
 };
+
+export default ModelProvider;
