@@ -1,100 +1,74 @@
-import ModelContextSingleton from "./ModelContextSingleton";
-import { generatePrompt, token_to_text } from "../utils/messages";
+import { pipeline } from "@huggingface/transformers";
+import { generateToolCall } from "../utils/messages";
+
+const MODEL_NAME = "onnx-community/Llama-3.2-1B-Instruct-q4f16";
+
+export const loadModelInstance = (function () {
+  let model = null; // Closure to store the model instance
+
+  return async function (
+    progress_callback = console.log,
+    modelPath = MODEL_NAME
+  ) {
+    if (!model) {
+      console.log("Loading model...", modelPath);
+      model = await pipeline("text-generation", modelPath, {
+        device: "webgpu", // <- Run on WebGPU
+        progress_callback: progress_callback,
+      });
+    } else {
+      console.log("Using cached model...");
+      progress_callback({ progress: 100, status: "done" });
+    }
+    return model;
+  };
+})();
 
 class WorkerInstance {
   constructor() {
-    this.instance = ModelContextSingleton.getInstance();
-    this.tokenizer = null;
-    this.llm = null;
-    this.config = null;
+    this.progressCallback = null;
+    this.modelLoadedCallback = null;
   }
-
   async initialize(progressCallback, modelLoadedCallback) {
-    await this.instance.initialize(progressCallback, modelLoadedCallback);
-    const { tokenizer, llm, config } = this.instance.getAll();
-    this.tokenizer = tokenizer;
-    this.llm = llm;
-    this.config = config;
+    this.progressCallback = progressCallback;
+    this.modelLoadedCallback = modelLoadedCallback;
+    await loadModelInstance(({ progress, status }) => {
+      console.log("progress", progress);
+      console.log("status", status);
+      progressCallback(progress);
+      modelLoadedCallback(status === "ready");
+    });
   }
 
   async terminateModel() {
-    if (this.llm.abort) {
-      this.llm.abort();
-      await this.llm.initilize_feed();
-      return true;
-    }
-    return false;
+    console.log("delete me ");
   }
 
-  async chatCompletion(query, systemPrompt, stream, key) {
-    if (!this.tokenizer || !this.llm) return null;
+  async chatCompletion(
+    query,
+    systemPrompt,
+    stream = false,
+    key = null,
+    tools = true
+  ) {
+    const generator = await loadModelInstance();
 
-    const prompt = generatePrompt(query, systemPrompt);
-
-    if (this.llm.pipeline) {
-      return this.pipelineGeneration(prompt, key);
-    } else {
-      return this.tokenGeneration(prompt, stream, key);
-    }
-  }
-
-  async pipelineGeneration(prompt, key) {
-    const generator = await this.llm.pipeline;
-    const output = await generator(prompt, {
-      max_length: 9999,
-      num_return_sequences: 1,
-    });
-    const outputText = output[0].generated_text;
-    return { status: "final", text: outputText, key };
-  }
-
-  async tokenGeneration(prompt, stream, key) {
-    const { input_ids } = await this.tokenizer(prompt, {
-      return_tensor: false,
-      padding: true,
-      truncation: true,
-    });
-
-    await this.llm.initilize_feed();
-    const start_timer = performance.now();
-    const output_index = this.llm.output_tokens.length + input_ids.length;
-
-    const output_tokens = await this.llm.generate(
-      input_ids,
-      (output_tokens) => {
-        if (output_tokens.length === input_ids.length + 1) {
-          const took = (performance.now() - start_timer) / 1000;
-          console.log(
-            `time to first token in ${took.toFixed(1)}sec, ${
-              input_ids.length
-            } tokens`
-          );
-        }
-
-        const newText = token_to_text(
-          this.tokenizer,
-          output_tokens,
-          output_index,
-          this.config
-        );
-
-        if (stream) {
-          return { status: "stream", text: newText, key };
-        }
+    const messages = [
+      {
+        role: "system",
+        content: systemPrompt,
       },
-      { max_tokens: this.config.max_tokens }
-    );
-
-    this.llm.abort();
-
-    const finalText = token_to_text(
-      this.tokenizer,
-      output_tokens,
-      output_index,
-      this.config
-    );
-
-    return { status: "final", text: finalText, key };
+      {
+        role: "user",
+        content: `give me json string response of the input : "${query}"`,
+      },
+    ];
+    const output = await generator(messages, { max_new_tokens: 1000 });
+    return {
+      status: "final",
+      text: output[0].generated_text.at(-1).content,
+      key,
+    };
   }
 }
 

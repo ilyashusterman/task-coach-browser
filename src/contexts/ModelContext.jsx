@@ -26,6 +26,7 @@ const defaultSettings = {
   huggingFaceModel: "HuggingFaceTB/SmolLM-360M-Instruct",
 };
 export const USER_SETTINGS = defaultSettings;
+
 const getUserSettings = () => {
   const storedSettings = localStorage.getItem("userModelSettings");
   return storedSettings
@@ -98,7 +99,7 @@ export const ModelProvider = ({ children }) => {
 
   useEffect(() => {
     initializeWorker();
-  }, [initializeWorker]);
+  }, [initializeWorker, workerInstance]);
 
   const processQueue = useCallback(async () => {
     if (isProcessingQueue.current) {
@@ -216,13 +217,8 @@ export const ModelProvider = ({ children }) => {
   );
 
   const abortWorker = useCallback(async () => {
-    if (workerInstance) {
-      await workerInstance.terminateModel();
-      setWorkerInstance(null);
-      initializationAttempted.current = false;
-      await initializeWorker();
-    }
-  }, [workerInstance, initializeWorker]);
+    console.log("Aborting");
+  });
 
   const contextValue = {
     isModelLoaded,

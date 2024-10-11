@@ -99,3 +99,32 @@ export function extractJsonString(text) {
     }
   }
 }
+
+export function generateToolCall(name, description, schema) {
+  // Step 1: Replace "object" with "dict" in the schema
+  const updatedSchema = JSON.stringify(schema, null, 4).replace(
+    /"type": "object"/g,
+    '"type": "dict"'
+  );
+
+  // Step 2: Format the function description
+  const functionDescription = `
+[
+    {
+        "name": "${name}",
+        "description": "${description}",
+        "parameters": ${updatedSchema}
+    }
+]`;
+
+  // Step 3: Create the complete output
+  const content = `
+Questions: Can you retrieve the details?
+Here is a list of functions in JSON format that you can invoke:
+${functionDescription}
+Should you decide to return the function call(s),Put it in the format of [func1(params_name=params_value, params_name2=params_value2...)]
+NO other text MUST be included.
+  `.trim();
+
+  return content;
+}
