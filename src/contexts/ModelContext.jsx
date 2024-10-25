@@ -25,14 +25,21 @@ const defaultSettings = {
   replicateModelPath: "meta/meta-llama-3.1-405b-instruct",
   huggingFaceModel: "HuggingFaceTB/SmolLM-360M-Instruct",
 };
-export const USER_SETTINGS = defaultSettings;
 
 const getUserSettings = () => {
   const storedSettings = localStorage.getItem("userModelSettings");
+  if (
+    !storedSettings ||
+    storedSettings === undefined ||
+    storedSettings === null
+  ) {
+    return defaultSettings;
+  }
   return storedSettings
     ? { ...defaultSettings, ...JSON.parse(storedSettings) }
     : defaultSettings;
 };
+export const USER_SETTINGS = getUserSettings();
 
 const saveUserSettings = (newSettings) => {
   const updatedSettings = {

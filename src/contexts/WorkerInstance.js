@@ -10,17 +10,21 @@ export const loadModelInstance = (function () {
     progress_callback = console.log,
     modelPath = MODEL_NAME
   ) {
-    if (!model) {
-      console.log("Loading model...", modelPath);
-      model = await pipeline("text-generation", modelPath, {
-        device: "webgpu", // <- Run on WebGPU
-        progress_callback: progress_callback,
-      });
-    } else {
-      console.log("Using cached model...");
-      progress_callback({ progress: 100, status: "done" });
-    }
-    return model;
+    return await pipeline("text-generation", modelPath, {
+      device: "webgpu", // <- Run on WebGPU
+      progress_callback: progress_callback,
+    });
+    // if (!model) {
+    //   console.log("Loading model...", modelPath);
+    //   model = await pipeline("text-generation", modelPath, {
+    //     device: "webgpu", // <- Run on WebGPU
+    //     progress_callback: progress_callback,
+    //   });
+    // } else {
+    //   console.log("Using cached model...");
+    //   progress_callback({ progress: 100, status: "done" });
+    // }
+    // return model;
   };
 })();
 
@@ -52,7 +56,7 @@ class WorkerInstance {
     tools = true
   ) {
     const generator = await loadModelInstance();
-
+    generator;
     const messages = [
       {
         role: "system",
@@ -60,10 +64,21 @@ class WorkerInstance {
       },
       {
         role: "user",
-        content: `give me json string response of the input : "${query}"`,
+        // content: `give me json string response of the input : "${query}"`,
+        content: query,
       },
     ];
-    const output = await generator(messages, { max_new_tokens: 1000 });
+    const output = await generator(messages, {
+      temperature: 0,
+      max_new_tokens: 1024,
+      do_sample: false,
+      // return_dict_in_generate: true,
+      // top_p: 0.8,
+      // repetition_penalty: 1.1,
+      // no_repeat_ngram_size: 2,
+      // do_sample: false,
+    });
+    await generator.dispose();
     return {
       status: "final",
       text: output[0].generated_text.at(-1).content,

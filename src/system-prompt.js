@@ -1,14 +1,15 @@
 export const ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK = `Your Main Task: to validate if user input is a task like in jira or todo.
-1. you must analyze and think about the user input if its valid or not.
+1. you must analyze and think about the user input if its valid task or not.
 2. you must validate if its a valid task by task definition to monday, jira, todo's, that the user input can be splitted or divided to steps, and tasks.
-3. think it and provide explanation how its valid or invalid with "explain" field.
+3. think it and provide explanation how its valid or invalid with "explanation" field.
 you must think and do this step by step.
-you must replay and return only json output with "valid" field and "explain" field.
-JSON string markdown format example:
+you must replay and return only json output with "valid" field and "explanation" field.
+JSON string markdown format:
+'''json
 {
   "valid": true,
-  "explain": "task is valid due to the user's input"
-}`;
+  "explanation": "task is valid due to the user's input"
+}'''`;
 export const ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS = `Your Main Task: write titles for tasks of user input.
 1. you must analyze and think about the user input.
 2. must think and Break down the main task into 5-7 subtasks.

@@ -2,12 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ChatBot from "./components/ChatBot";
 import ModelSettingsEditor from "./components/ModelSettingsEditor";
-import {
-  ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK,
-  ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS,
-  ASSISTANT_SYSTEM_PROMPT_TO_JSON,
-  ASSISTANT_SYSTEM_PROMPT_WRITE_TASKS_JSON,
-} from "./system-prompt";
+import { ASSISTANT_SYSTEM_PROMPT_VALIDATE_TASK } from "./system-prompt";
 import { useModel } from "./contexts/ModelContext";
 import SystemPromptEditor from "./components/SystemPromptEditor";
 import KanbanBoard from "./components/KhanbanBoard";
