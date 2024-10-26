@@ -212,6 +212,7 @@ export const ModelProvider = ({ children }) => {
             callBackUpdate,
             timeoutMiliseconds
           );
+          break;
         } catch (error) {
           console.error(`Attempt ${attempt + 1} failed:`, error);
           if (attempt === retries - 1) throw error;
