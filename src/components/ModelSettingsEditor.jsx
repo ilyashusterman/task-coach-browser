@@ -104,12 +104,24 @@ const ModelSettingsEditor = () => {
         {!disallowedDownloading && progress?.text && progress?.progress && (
           <div className="bg-blue-100 p-3 rounded-md">
             <div className="text-sm font-medium text-blue-800 flex justify-between items-center">
-              <span>{progress.text}</span>
-              <span className="text-blue-600">
+              <div className="space-y-1">
+                <span>{progress.text}</span>
+                {progress.name && (
+                  <div className="text-xs text-blue-700">
+                    Model: {progress.name}
+                  </div>
+                )}
+                {progress.file && (
+                  <div className="text-xs text-blue-700">
+                    File: {progress.file}
+                  </div>
+                )}
+              </div>
+              <span className="text-blue-600 ml-4">
                 {Math.round(progress.progress)}%
               </span>
             </div>
-            <div className="mt-1 h-2 bg-blue-200 rounded-full">
+            <div className="mt-2 h-2 bg-blue-200 rounded-full">
               <div
                 className="h-full bg-blue-500 rounded-full transition-all duration-300 ease-in-out"
                 style={{ width: `${progress.progress}%` }}

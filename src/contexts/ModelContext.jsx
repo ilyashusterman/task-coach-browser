@@ -77,8 +77,6 @@ export const ModelProvider = ({ children }) => {
       return;
     }
 
-    initializationAttempted.current = true;
-
     if (
       settings.useAPI ||
       settings.disallowedDownloading ||
@@ -86,7 +84,7 @@ export const ModelProvider = ({ children }) => {
     ) {
       return;
     }
-
+    initializationAttempted.current = true;
     try {
       const instance = new WorkerInstance();
       await instance.initialize(
@@ -96,7 +94,8 @@ export const ModelProvider = ({ children }) => {
       setWorkerInstance(instance);
     } catch (error) {
       console.error("Failed to initialize worker:", error);
-      initializationAttempted.current = false; // Allow retry on error
+    } finally {
+      initializationAttempted.current = false;
     }
   }, [
     settings.useAPI,
@@ -106,7 +105,7 @@ export const ModelProvider = ({ children }) => {
 
   useEffect(() => {
     initializeWorker();
-  }, [initializeWorker, workerInstance]);
+  }, [settings.disallowedDownloading]);
 
   const processQueue = useCallback(async () => {
     if (isProcessingQueue.current) {
@@ -204,21 +203,25 @@ export const ModelProvider = ({ children }) => {
       callBackUpdate = undefined,
       timeoutMiliseconds = 150000
     ) => {
+      let response = "";
       for (let attempt = 0; attempt < retries; attempt++) {
         try {
-          const response = await chatCompletion(
+          response = await chatCompletion(
             query,
             sysPrompt,
             callBackUpdate,
             timeoutMiliseconds
           );
-          return extractJsonString(response);
         } catch (error) {
           console.error(`Attempt ${attempt + 1} failed:`, error);
-          if (attempt === retries - 1)
-            throw new Error(`Failed after ${retries} attempts`);
+          if (attempt === retries - 1) throw error;
         }
       }
+      const objects = extractJsonString(response);
+      if (objects === null || objects === undefined || objects.length === 0) {
+        throw new Error("Error: " + response);
+      }
+      return objects;
     },
     [chatCompletion]
   );

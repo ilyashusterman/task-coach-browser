@@ -34,6 +34,17 @@ const TaskComponent = ({
     return text;
   };
 
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const handleFileUpload = (e) => {
     const files = e.target.files;
     if (files) {
@@ -113,7 +124,7 @@ const TaskComponent = ({
           backdropFilter: "blur(10px)",
           backgroundColor: "rgba(255, 255, 255, 0.8)",
           border: "1px solid #E5E5EA",
-          width: "300px", // Fixed width for the task card
+          width: "300px",
         }}
         draggable
         onDragStart={(e) => handleDragStart(task, e)}
@@ -151,6 +162,11 @@ const TaskComponent = ({
           </Tooltip.Root>
           <span className="text-xs text-gray-500">{task.estimatedTime}</span>
         </div>
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-xs text-gray-500">
+            Created: {task.createdTime && formatDate(task.createdTime)}
+          </span>
+        </div>
         <div className="text-xs text-gray-500 mb-3">
           <strong>Main Task:</strong> {task.parentTitle || task.title}
         </div>
@@ -174,7 +190,7 @@ const TaskComponent = ({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <textarea
-                value={truncateText(task.description, 10)}
+                value={task.description}
                 onChange={(e) =>
                   updateTask(columnId, task.id, { description: e.target.value })
                 }

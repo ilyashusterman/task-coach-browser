@@ -58,6 +58,34 @@ export const token_to_text = (tokenizer, tokens, startidx, config) => {
   });
 };
 
+function extractJsonObjects(inputString) {
+  // Step 1: Define a regular expression to capture JSON arrays or objects without recursion
+  const jsonRegex = /(\[.*?\]|\{.*?\})/gs;
+
+  // Step 2: Find matches for JSON patterns (arrays or objects)
+  const matches = inputString.match(jsonRegex);
+
+  if (!matches) {
+    // No JSON patterns found, return an empty array
+    return [];
+  }
+
+  // Step 3: Parse each matched JSON string
+  const jsonObjects = matches.map((match) => {
+    try {
+      return JSON.parse(match);
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      return null;
+    }
+  });
+  if (jsonObjects.length === 1) {
+    return jsonObjects[0];
+  }
+  // Filter out any null results from failed parses
+  return jsonObjects.filter((obj) => obj !== null);
+}
+
 // Step 1: Define the Regular Expression
 // Step 2: Write the Function
 function findJsonInString(inputString) {
@@ -81,23 +109,17 @@ function findJsonInString(inputString) {
 }
 
 export function extractJsonString(text) {
-  const regex = /```json\s*([\s\S]*?)\s*```/;
-  const match = text.match(regex);
-
   try {
-    if (match && match[1]) {
-      const jsonString = match[1];
-      const jsonObject = JSON.parse(jsonString);
-      return jsonObject;
-    } else {
-      return JSON.parse(text);
-    }
+    return extractJsonObjects(text);
   } catch (e) {
     const parsedText = findJsonInString(text);
     if (parsedText) {
       return parsedText;
+    } else {
+      throw new Error("Error: " + text);
     }
   }
+  throw new Error("Error: " + text);
 }
 
 export function generateToolCall(name, description, schema) {
@@ -127,4 +149,39 @@ NO other text MUST be included.
   `.trim();
 
   return content;
+}
+
+export function extractToolChoice(jsonString) {
+  // Define markers for extraction
+  const startMarker = "#####TOOL_CHOICE_START######";
+  const endMarker = "#####TOOL_CHOICE_END######";
+
+  // Find the start and end indices of the JSON section
+  const startIndex = jsonString.indexOf(startMarker) + startMarker.length;
+  const endIndex = jsonString.indexOf(endMarker);
+
+  // Check if markers are found; if not, return null for jsonObject and the entire string as prompt
+  if (startIndex === -1 || endIndex === -1 || endIndex <= startIndex) {
+    return {
+      tool: null,
+      prompt: jsonString.trim(),
+    };
+  }
+
+  // Extract substring between the markers
+  const jsonSubstring = jsonString.slice(startIndex, endIndex).trim();
+  // Try to parse the extracted substring as JSON
+  try {
+    const tool = JSON.parse(jsonSubstring);
+    return {
+      tool, // Parsed JSON object
+      prompt: jsonString.slice(0, startIndex).replace(startMarker, ""), // Original string without markers and JSON object
+    };
+  } catch (error) {
+    // If JSON parsing fails, return null and the full original string as prompt
+    return {
+      tool: null,
+      prompt: jsonString.trim(),
+    };
+  }
 }

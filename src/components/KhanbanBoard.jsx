@@ -21,7 +21,7 @@ import {
   generateSubtasks,
   generateTask,
   getFlatTasksFromTaskRecursively,
-} from "./utils/task-helpers";
+} from "./utils/gpt-task";
 
 const MAX_TOKENS = 15;
 
@@ -114,9 +114,6 @@ const KanbanBoard = () => {
 
     if (e.target.name === "title" || e.target.name === "description") {
       const tokenCount = await getTokenCount(value);
-      if (tokenCount > MAX_TOKENS) {
-        return; // Don't update if token limit is exceeded
-      }
       updatedTask[`${e.target.name}Tokens`] = tokenCount;
     }
     setNewTask(updatedTask);
@@ -141,16 +138,19 @@ const KanbanBoard = () => {
           subtasks = [subtasks];
         }
       }
-
+      setProgressAndText("Creating main task", 80);
       describedTask = await generateTask(newTask, chatCompletionJSON);
+      setProgressAndText("Created main task, successfully!", 95);
     } catch (err) {
       setError(err.message);
       setIsLoading(false);
       return;
     }
     setIsGenerating(false);
+    const generatedTask = generateTaskObject();
+    const { createdTime } = generatedTask;
     const parentTask = {
-      ...generateTaskObject(),
+      ...generatedTask,
       ...describedTask,
       id: `task-${uuidv4()}`,
       isParent: true,
@@ -163,6 +163,7 @@ const KanbanBoard = () => {
           ...generateTaskObject({
             color: parentTask.color,
             id: subTaskId,
+            createdTime,
           }),
           ...subtask,
           parentId: parentTask.id,
